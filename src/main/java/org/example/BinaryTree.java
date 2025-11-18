@@ -9,29 +9,18 @@ public class BinaryTree {
     }
 
     public void insert(int weight) {
-        Node newNode = new Node(weight);
-        if (root == null) {
-            root = newNode;
-            return;
-        }
+        root = insertRec(root, weight);
+    }
 
-        Node current = root;
-        Node parent = null;
-
-        while (current != null) {
-            parent = current;
-            if (weight < current.getWeight()) {
-                current = current.getLeft();
-            } else {
-                current = current.getRight();
-            }
-        }
-
-        if (weight < parent.getWeight()) {
-            parent.setLeft(newNode);
+    private Node insertRec(Node node, int weight) {
+        if (node == null) return new Node(weight);
+        if (weight < node.getWeight()) {
+            node.setLeft(insertRec(node.getLeft(), weight));
+        } else if (weight > node.getWeight()) {
+            node.setRight(insertRec(node.getRight(), weight));
         } else {
-            parent.setRight(newNode);
         }
+        return node;
     }
 
     public void delete(int weight) {
@@ -61,6 +50,7 @@ public class BinaryTree {
             }
             node.setLeft(null);
             node.setRight(null);
+            System.out.println("Deleted node: " + weight);
             return;
         }
 
@@ -70,31 +60,32 @@ public class BinaryTree {
         while (successor.getLeft() != null) {
             succParent = successor;
             successor = successor.getLeft();
+
         }
 
-        // Eliminar successor de su posición actual y moverlo a la posición de node
         if (succParent != node) {
-            // reemplazamos el enlace del succParent por el right del successor
-            succParent.setLeft(successor.getRight());
-            // successor toma el right original de node
-            successor.setRight(node.getRight());
+            succParent.setLeft(successor.getRight()); // Link successor's right child to its parent
+            successor.setRight(node.getRight()); // Link node's right child to successor
         }
-        // successor toma el left original de node
-        successor.setLeft(node.getLeft());
+        System.out.println("Deleted node: " + weight);
+        successor.setLeft(node.getLeft()); // Link node's left child to successor
 
-        // Enlazar successor en el padre de node (o como root)
         if (parent == null) {
-            root = successor;
+            root = successor; // Deleting the root node
         } else if (parent.getLeft() == node) {
-            parent.setLeft(successor);
+            parent.setLeft(successor); // Link parent to successor
         } else {
-            parent.setRight(successor);
+            parent.setRight(successor); // Link parent to successor
         }
-
+        // Clean up the deleted node
         node.setLeft(null);
         node.setRight(null);
     }
 
+    public Node setRoot(Node root) {
+        this.root = root;
+        return root;
+    }
 
     public void preOrder() {
         preOrderRec(root);
@@ -107,4 +98,31 @@ public class BinaryTree {
         preOrderRec(node.getLeft());
         preOrderRec(node.getRight());
     }
+
+    public void inOrder() {
+        inOrderRec(root);
+        System.out.println();
+    }
+
+    private void inOrderRec(Node node) {
+        if (node == null) return;
+        inOrderRec(node.getLeft());
+        System.out.print(node.getWeight() + " ");
+        inOrderRec(node.getRight());
+    }
+
+
+    public void postOrder() {
+        postOrderRec(root);
+        System.out.println();
+    }
+
+    private void postOrderRec(Node node) {
+        if (node == null) return;
+        postOrderRec(node.getLeft());
+        postOrderRec(node.getRight());
+        System.out.print(node.getWeight() + " ");
+    }
+
+
 }

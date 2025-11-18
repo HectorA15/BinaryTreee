@@ -3,15 +3,14 @@ package org.example;
 import javafx.scene.control.Button;
 
 public class Node {
-
-    private int weight;
-    private Node left, right;
     public Button visual;
+    private int weight;
+    private Node left;
+    private Node right;
 
-    public Node(int peso) {
-        this.weight = peso;
-        this.right = null;
-        this.left = null;
+
+    public Node(int weight) {
+        this.weight = weight;
     }
 
     public int getWeight() {
@@ -37,5 +36,4 @@ public class Node {
     public void setRight(Node right) {
         this.right = right;
     }
-
 }
