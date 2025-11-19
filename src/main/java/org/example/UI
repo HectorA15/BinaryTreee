@@ -113,7 +113,7 @@ public class IU extends Application {
              break;
          case 3:// falla 
              Recorridos.setText("Recorrido PREorder");
-             String TextoPre=arbol.postOrder();
+             String TextoPre=arbol.preOrder();
              TextoRecorridos.setText(TextoPre);
              arbol.preOrder();
              clik=0;
