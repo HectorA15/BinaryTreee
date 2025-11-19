@@ -87,41 +87,45 @@ public class BinaryTree {
         return root;
     }
 
-    public void preOrder() {
-        preOrderRec(root);
-        System.out.println();
+    public String preOrder() {
+        StringBuilder sb = new StringBuilder();
+        preOrderRec(root,sb);
+        return sb.toString() ;
     }
 
-    private void preOrderRec(Node node) {
+    private void preOrderRec(Node node, StringBuilder s) {
         if (node == null) return;
-        System.out.print(node.getWeight() + " ");
-        preOrderRec(node.getLeft());
-        preOrderRec(node.getRight());
+        s.append(node.weight + ",").append("");
+        preOrderRec(node.getLeft(),s);
+        preOrderRec(node.getRight(),s);
     }
 
-    public void inOrder() {
-        inOrderRec(root);
-        System.out.println();
+    public String inOrder() {
+        StringBuilder sb = new StringBuilder();
+        inOrderRec(root,sb);
+        return sb.toString();
     }
 
-    private void inOrderRec(Node node) {
+    private void inOrderRec(Node node, StringBuilder s) {
         if (node == null) return;
-        inOrderRec(node.getLeft());
-        System.out.print(node.getWeight() + " ");
-        inOrderRec(node.getRight());
+        inOrderRec(node.getLeft(),s);
+        s.append(node.weight+"," ).append("");
+        inOrderRec(node.getRight(),s);
     }
 
 
-    public void postOrder() {
-        postOrderRec(root);
-        System.out.println();
+    public String postOrder() {
+        StringBuilder sb = new StringBuilder();
+        postOrderRec(root,sb);
+        return  sb.toString() ;
     }
 
-    private void postOrderRec(Node node) {
+    private void postOrderRec(Node node,StringBuilder s) {
         if (node == null) return;
-        postOrderRec(node.getLeft());
-        postOrderRec(node.getRight());
-        System.out.print(node.getWeight() + " ");
+        preOrderRec(node.getLeft(),s);
+        preOrderRec(node.getRight(),s);
+        s.append(node.weight+ ",").append("");
+
     }
 
 
