@@ -7,6 +7,7 @@ public class Node {
     private int weight;
     private Node left;
     private Node right;
+    Node visual;
 
 
     public Node(int weight) {
