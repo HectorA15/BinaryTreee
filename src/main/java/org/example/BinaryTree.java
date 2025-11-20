@@ -23,7 +23,7 @@ public class BinaryTree {
     return node;
   }
 
-  public void delete(int weight) {
+  public boolean delete(int weight) {
     Node parent = null;
     Node node = root;
 
@@ -36,7 +36,7 @@ public class BinaryTree {
 
     if (node == null) {
       System.out.println("Node not found: " + weight);
-      return;
+      return false;
     }
 
     // case 2: node has no right child
@@ -51,7 +51,7 @@ public class BinaryTree {
       node.setLeft(null);
       node.setRight(null);
       System.out.println("Deleted node: " + weight);
-      return;
+      return true;
     }
 
     // case 3: node has right child
@@ -66,10 +66,9 @@ public class BinaryTree {
       succParent.setLeft(successor.getRight()); // Link successor's right child to its parent
       successor.setRight(node.getRight()); // Link node's right child to successor
     }
-    System.out.println("Deleted node: " + weight);
-    successor.setLeft(node.getLeft()); // Link node's left child to successor
+      successor.setLeft(node.getLeft()); // Link node's left child to successor
 
-    if (parent == null) {
+      if (parent == null) {
       root = successor; // Deleting the root node
     } else if (parent.getLeft() == node) {
       parent.setLeft(successor); // Link parent to successor
@@ -79,6 +78,9 @@ public class BinaryTree {
     // Clean up the deleted node
     node.setLeft(null);
     node.setRight(null);
+
+      System.out.println("Deleted node: " + weight);
+      return true;
   }
 
   public Node setRoot(Node root) {

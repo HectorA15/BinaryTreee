@@ -136,57 +136,86 @@ public class UI extends Application {
           switch (click) {
             case 1:
               text = arbol.inOrder();
-              orderText.setText("Inorder:\t\t"+text);
+              orderText.setText("Inorder:\t\t" + text);
 
               break;
             case 2:
               recorridos.setText("Recorrido PostOrder");
               String textoPos = arbol.postOrder();
-              orderText.setText("PostOrder:\t"+textoPos);
+              orderText.setText("PostOrder:\t" + textoPos);
               break;
             case 3: // falla
               recorridos.setText("Recorrido PreOrder");
               String textoPre = arbol.preOrder();
-              orderText.setText("PreOrder:\t\t"+textoPre);
+              orderText.setText("PreOrder:\t\t" + textoPre);
               arbol.preOrder();
               click = 0;
               break;
           }
         });
-      mode.setOnAction(
-              event -> {
-                  if (!eliminar) {
-                      String txt = textField.getText();
-                      if (txt == null || txt.trim().isEmpty()) return;
-                      int val;
-                      try {
-                          val = Integer.parseInt(txt.trim());
-                      } catch (NumberFormatException ex) {
-                          return;
-                      }
+    mode.setOnAction(
+        event -> {
+          if (!eliminar) {
+            String txt = textField.getText();
+            if (txt == null || txt.trim().isEmpty()) return;
+            int val;
+            try {
+              val = Integer.parseInt(txt.trim());
+            } catch (NumberFormatException ex) {
+              return;
+            }
 
-                      if (raiz == null) {
-                          raiz = new Button(String.valueOf(val));
-                          datoRaiz = new Node(val);
-                          datoRaiz.visual = raiz;
-                          arbol.setRoot(datoRaiz);
-                          centralPanel.getChildren().add(raiz);
-                          textField.clear();
-                          raiz.setLayoutX(centralPanel.getWidth() / 2);
-                          raiz.setLayoutY(30);
-                      } else {
-                          nodo = new Button(String.valueOf(val));
-                          datoNuevo = val;
-                          textField.clear();
-                          calcularLugar(datoNuevo, raiz, 1, datoRaiz);
-                          nodo.setStyle("-fx-background-radius: 50%;");
-                      }
-                  } else {
-                      // modo eliminar: implementar según BinaryTree si se necesita
+            if (raiz == null) {
+              raiz = new Button(String.valueOf(val));
+              datoRaiz = new Node(val);
+              datoRaiz.visual = raiz;
+              arbol.setRoot(datoRaiz);
+              centralPanel.getChildren().add(raiz);
+              textField.clear();
+              raiz.setLayoutX(centralPanel.getWidth() / 2);
+              raiz.setLayoutY(30);
+            } else {
+              nodo = new Button(String.valueOf(val));
+              datoNuevo = val;
+              textField.clear();
+              calcularLugar(datoNuevo, raiz, 1, datoRaiz);
+              nodo.setStyle("-fx-background-radius: 50%;");
+            }
+          } else {
+            String txt = textField.getText();
+            if (txt == null || txt.trim().isEmpty()) return;
+            int val;
+            try {
+              val = Integer.parseInt(txt.trim());
+            } catch (NumberFormatException ex) {
+              return;
+            }
+
+            boolean deleted = arbol.delete(val);
+            if (deleted) {
+              // search and remove the button from centralPanel
+              Button toRemove = null; // button to remove
+              for (javafx.scene.Node child :
+                  centralPanel.getChildren()) { // iterate through children
+                if (child instanceof Button) { // check if child is a button
+                  Button b = (Button) child; // cast to button
+                  if (b.getText().equals(String.valueOf(val))) { // check if text matches
+                    toRemove = b; // set button to remove
+                    break; // exit loop once found
                   }
-              });
-
-
+                }
+              }
+              if (toRemove != null) { // if button found
+                centralPanel.getChildren().remove(toRemove); // remove from panel
+                if (toRemove == raiz) { // if it was the root
+                  raiz = null;
+                  datoRaiz = null;
+                }
+              }
+              textField.clear();
+            }
+          }
+        });
 
     Scene escena = new Scene(panelPrincipal, 800, 600);
     String css = this.getClass().getResource("/styles.css").toExternalForm();
@@ -195,13 +224,16 @@ public class UI extends Application {
     stage.setScene(escena);
     stage.show();
 
-      escena.setOnKeyPressed(event -> {
+    escena.setOnKeyPressed(
+        event -> {
           if (event.getCode() == KeyCode.ENTER) {
-              mode.fire();
+            mode.fire();
           } else if (event.getCode() == KeyCode.ESCAPE) {
-              Platform.exit();
+            Platform.exit();
+          } else if (event.getCode() == KeyCode.SHIFT) {
+            switchMode.fire();
           }
-      });
+        });
   }
 
   public void calcularLugar(int peso, Button padreVisual, int nivelActual, Node nodoLogicoPadre) {
