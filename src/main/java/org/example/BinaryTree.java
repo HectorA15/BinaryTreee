@@ -122,8 +122,12 @@ public class BinaryTree {
 
   private void postOrderRec(Node node, StringBuilder s) {
     if (node == null) return;
-    preOrderRec(node.getLeft(), s);
-    preOrderRec(node.getRight(), s);
+    postOrderRec(node.getLeft(), s);
+    postOrderRec(node.getRight(), s);
     s.append(node.weight + ",").append("");
+  }
+
+  public Node getRoot() {
+    return this.root;
   }
 }

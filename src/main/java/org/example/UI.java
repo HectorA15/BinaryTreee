@@ -1,17 +1,18 @@
 package org.example;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
@@ -33,6 +34,9 @@ public class UI extends Application {
   HBox bottomBar;
   Pane centralPanel;
 
+  // capa para dibujar las líneas (debe estar detrás de los botones)
+  Pane edgesLayer;
+
   Boolean eliminar = false;
 
   Node datoRaiz;
@@ -43,13 +47,16 @@ public class UI extends Application {
   Image addImage, deleteImage;
   ImageView addView, deleteView;
 
+  // <-- keep a reference to the tree for general use
+  BinaryTree arbol;
+
   @Override
   public void start(@NotNull Stage stage) throws Exception {
     addImage = new Image(this.getClass().getResourceAsStream("/images/add.png"));
     deleteImage = new Image(this.getClass().getResourceAsStream("/images/delete.png"));
     addView = new ImageView(addImage);
     deleteView = new ImageView(deleteImage);
-    // ajustar tamaño del icono
+    // adjust icon size
     addView.setFitWidth(18);
     addView.setFitHeight(18);
     addView.setPreserveRatio(true);
@@ -57,7 +64,8 @@ public class UI extends Application {
     deleteView.setFitHeight(18);
     deleteView.setPreserveRatio(true);
 
-    BinaryTree arbol = new BinaryTree();
+    // move tree to a class field
+    arbol = new BinaryTree();
 
     panelPrincipal = new BorderPane();
     // ------------- center -------------
@@ -66,13 +74,47 @@ public class UI extends Application {
     centralPanel.setFocusTraversable(false);
     centralPanel.setMaxWidth(Double.MAX_VALUE);
     centralPanel.setMaxHeight(Double.MAX_VALUE);
+
+    // create a dedicated layer for edges (lines) and add it as the bottom-most child
+    edgesLayer = new Pane();
+    edgesLayer.setPickOnBounds(false); // don't intercept mouse events
+    edgesLayer.setMouseTransparent(true);
+
+    // add edgesLayer first so it's behind other children
+    centralPanel.getChildren().add(edgesLayer);
+
     // order text
     Text orderText = new Text();
     orderText.getStyleClass().add("typed-text");
-    orderText.setFill(Color.WHITE);
+    orderText.setFill(Color.DIMGRAY);
     AnchorPane.setLeftAnchor(orderText, 10.0);
     AnchorPane.setBottomAnchor(orderText, 10.0);
     centralPanel.getChildren().add(orderText);
+    // preOrder text
+    Text orderPreText = new Text();
+    orderPreText.getStyleClass().add("typed-text");
+    orderPreText.setFill(Color.DIMGRAY);
+    AnchorPane.setLeftAnchor(orderPreText, 10.0);
+    AnchorPane.setBottomAnchor(orderPreText, 30.0);
+    centralPanel.getChildren().add(orderPreText);
+
+    // postOrder text
+    Text orderPostText = new Text();
+    orderPostText.getStyleClass().add("typed-text");
+    orderPostText.setFill(Color.DIMGRAY);
+    AnchorPane.setLeftAnchor(orderPostText, 10.0);
+    AnchorPane.setBottomAnchor(orderPostText, 50.0);
+    centralPanel.getChildren().add(orderPostText);
+
+    // initialize orders text
+    String textOrder = arbol.preOrder();
+    orderText.setText("PreOrder:\t\t" + textOrder);
+
+    String textPre = arbol.inOrder();
+    orderPreText.setText("Inorder:\t\t" + textPre);
+
+    String textPost = arbol.postOrder();
+    orderPostText.setText("PostOrder:\t" + textPost);
     // scroll pane
     scroll = new ScrollPane(centralPanel);
     scroll.setFocusTraversable(false);
@@ -90,8 +132,7 @@ public class UI extends Application {
 
     // initialize buttons and text field
     switchMode = new Button("Switch Mode");
-    recorridos = new Button("InOrder");
-    cambioRec = new Button("Recorrido");
+    cambioRec = new Button("Switch Order");
     mode = new Button();
     mode.setGraphic(addView);
     textField = new TextField();
@@ -103,14 +144,9 @@ public class UI extends Application {
 
     bottomBar
         .getChildren()
-        .addAll(
-            switchMode,
-            mode,
-            textField,
-            recorridos,
-            cambioRec); // add buttons and text field to bottom bar
+        .addAll(switchMode, mode, textField); // add buttons and text field to bottom bar
 
-    // Initialize tree
+    // Initialize tree (no nodes yet)
     arbol.inOrder();
     arbol.preOrder();
     arbol.postOrder();
@@ -130,29 +166,6 @@ public class UI extends Application {
           }
         });
 
-    cambioRec.setOnAction(
-        Event -> {
-          click++;
-          switch (click) {
-            case 1:
-              text = arbol.inOrder();
-              orderText.setText("Inorder:\t\t" + text);
-
-              break;
-            case 2:
-              recorridos.setText("Recorrido PostOrder");
-              String textoPos = arbol.postOrder();
-              orderText.setText("PostOrder:\t" + textoPos);
-              break;
-            case 3: // falla
-              recorridos.setText("Recorrido PreOrder");
-              String textoPre = arbol.preOrder();
-              orderText.setText("PreOrder:\t\t" + textoPre);
-              arbol.preOrder();
-              click = 0;
-              break;
-          }
-        });
     mode.setOnAction(
         event -> {
           if (!eliminar) {
@@ -170,7 +183,9 @@ public class UI extends Application {
               datoRaiz = new Node(val);
               datoRaiz.visual = raiz;
               arbol.setRoot(datoRaiz);
+
               centralPanel.getChildren().add(raiz);
+              updateOrdersText(orderText, orderPreText, orderPostText);
               textField.clear();
               raiz.setLayoutX(centralPanel.getWidth() / 2);
               raiz.setLayoutY(30);
@@ -180,6 +195,9 @@ public class UI extends Application {
               textField.clear();
               calcularLugar(datoNuevo, raiz, 1, datoRaiz);
               nodo.setStyle("-fx-background-radius: 50%;");
+              // after inserting, recalculate positions so everything stays aligned
+              redrawTree();
+              updateOrdersText(orderText, orderPreText, orderPostText);
             }
           } else {
             String txt = textField.getText();
@@ -207,12 +225,25 @@ public class UI extends Application {
               }
               if (toRemove != null) { // if button found
                 centralPanel.getChildren().remove(toRemove); // remove from panel
-                if (toRemove == raiz) { // if it was the root
-                  raiz = null;
-                  datoRaiz = null;
-                }
               }
               textField.clear();
+
+              // --- synchronize the UI with the logical tree after delete ---
+              Node newRoot = arbol.getRoot(); // get current logical root
+              datoRaiz = newRoot;
+              if (newRoot != null) {
+                // if logical node has no visual Button, create one
+                if (newRoot.visual == null) {
+                  Button b = new Button(String.valueOf(newRoot.getWeight()));
+                  newRoot.visual = b;
+                }
+                raiz = newRoot.visual;
+              } else {
+                raiz = null;
+              }
+              // after deleting, redraw to reposition remaining nodes and edges
+              redrawTree();
+              updateOrdersText(orderText, orderPreText, orderPostText);
             }
           }
         });
@@ -224,6 +255,11 @@ public class UI extends Application {
     stage.setScene(escena);
     stage.show();
 
+    // if the panel size changes, rearrange nodes
+    centralPanel.widthProperty().addListener((obs, oldVal, newVal) -> redrawTree());
+    centralPanel.heightProperty().addListener((obs, oldVal, newVal) -> redrawTree());
+
+    // allow Enter/Escape/Shift shortcuts
     escena.setOnKeyPressed(
         event -> {
           if (event.getCode() == KeyCode.ENTER) {
@@ -234,35 +270,162 @@ public class UI extends Application {
             switchMode.fire();
           }
         });
+
+    // draw initially (in case there were already nodes)
+    redrawTree();
+    updateOrdersText(orderText, orderPreText, orderPostText);
   }
 
-  public void calcularLugar(int peso, Button padreVisual, int nivelActual, Node nodoLogicoPadre) {
-    int DatoPadre = (Integer.parseInt(padreVisual.getText()));
+  // reposition all nodes and redraw edges
+  public void redrawTree() {
+
+    if (datoRaiz == null || datoRaiz.visual == null) {
+      // clear edges if no nodes
+      edgesLayer.getChildren().clear();
+      return;
+    }
+
+    // Ensure the root Button is present in the panel (after edgesLayer and orderText)
+    if (!centralPanel.getChildren().contains(datoRaiz.visual)) {
+      centralPanel.getChildren().add(datoRaiz.visual);
+    }
+
+    // Position the root at the center
+    double centerX = centralPanel.getWidth() / 2;
+    datoRaiz.visual.setLayoutX(centerX);
+    datoRaiz.visual.setLayoutY(30);
+
+    // Reposition children recursively
+    positionChildrenRecursively(datoRaiz, 1);
+
+    // after layout updated, redraw edges using real bounds
+    Platform.runLater(this::redrawEdges);
+  }
+
+  // helper to position children recursively
+  private void positionChildrenRecursively(Node nodoLogicoPadre, int nivelActual) {
+    if (nodoLogicoPadre == null || nodoLogicoPadre.visual == null) return;
+
+    Button padreVisual = nodoLogicoPadre.visual;
     double Espacio = (centralPanel.getWidth() / 2) / Math.pow(2, nivelActual);
-    if (peso < DatoPadre) {
+
+    if (nodoLogicoPadre.getLeft() != null) {
+      Node leftNode = nodoLogicoPadre.getLeft();
+      // ensure the Button exists in the panel
+      if (leftNode.visual != null && !centralPanel.getChildren().contains(leftNode.visual)) {
+        centralPanel.getChildren().add(leftNode.visual);
+      }
+      if (leftNode.visual != null) {
+        leftNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
+        leftNode.visual.setLayoutX(padreVisual.getLayoutX() - Espacio);
+      }
+      positionChildrenRecursively(leftNode, nivelActual + 1);
+    }
+
+    if (nodoLogicoPadre.getRight() != null) {
+      Node rightNode = nodoLogicoPadre.getRight();
+      if (rightNode.visual != null && !centralPanel.getChildren().contains(rightNode.visual)) {
+        centralPanel.getChildren().add(rightNode.visual);
+      }
+      if (rightNode.visual != null) {
+        rightNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
+        rightNode.visual.setLayoutX(padreVisual.getLayoutX() + Espacio);
+      }
+      positionChildrenRecursively(rightNode, nivelActual + 1);
+    }
+  }
+
+  // draw edges between parent and child nodes
+  private void redrawEdges() {
+    edgesLayer.getChildren().clear();
+    if (datoRaiz == null) return;
+    drawEdgesRecursively(datoRaiz);
+  }
+
+  // helper to draw edges recursively
+  private void drawEdgesRecursively(Node nodoLogico) {
+    if (nodoLogico == null || nodoLogico.visual == null) return;
+    Button parentBtn = nodoLogico.visual;
+
+    // left child
+    if (nodoLogico.getLeft() != null && nodoLogico.getLeft().visual != null) {
+      Button childBtn = nodoLogico.getLeft().visual;
+      Line line = createLineBetween(parentBtn, childBtn);
+      edgesLayer.getChildren().add(line);
+      drawEdgesRecursively(nodoLogico.getLeft());
+    }
+
+    // right child
+    if (nodoLogico.getRight() != null && nodoLogico.getRight().visual != null) {
+      Button childBtn = nodoLogico.getRight().visual;
+      Line line = createLineBetween(parentBtn, childBtn);
+      edgesLayer.getChildren().add(line);
+      drawEdgesRecursively(nodoLogico.getRight());
+    }
+  }
+
+  // create a line between two buttons
+  private Line createLineBetween(Button a, Button b) {
+    // Force layout so bounds estén actualizados
+    a.applyCss();
+    a.layout();
+    b.applyCss();
+    b.layout();
+
+    Bounds aBounds = a.getBoundsInParent();
+    Bounds bBounds = b.getBoundsInParent();
+
+    double startX = aBounds.getMinX() + aBounds.getWidth() / 2.0;
+    double startY = aBounds.getMinY() + aBounds.getHeight() / 2.0;
+    double endX = bBounds.getMinX() + bBounds.getWidth() / 2.0;
+    double endY = bBounds.getMinY() + bBounds.getHeight() / 2.0;
+
+    Line line = new Line(startX, startY, endX, endY);
+    line.setStrokeWidth(2);
+    line.setStroke(Color.LIGHTGRAY);
+    line.setMouseTransparent(true);
+    return line;
+  }
+
+  public void updateOrdersText(Text orderText, Text orderPreText, Text orderPostText) {
+    String textOrder = arbol.preOrder();
+    orderText.setText("PreOrder:\t\t" + textOrder);
+
+    String textPre = arbol.inOrder();
+    orderPreText.setText("Inorder:\t\t" + textPre);
+
+    String textPost = arbol.postOrder();
+    orderPostText.setText("PostOrder:\t" + textPost);
+  }
+
+  // calcula el lugar del nuevo nodo y lo inserta en el panel central
+  public void calcularLugar(int weight, Button padreVisual, int nivelActual, Node nodoLogicoPadre) {
+    int datoPadre = (Integer.parseInt(padreVisual.getText()));
+    double espacio = (centralPanel.getWidth() / 2) / Math.pow(2, nivelActual);
+    if (weight < datoPadre) {
       if (nodoLogicoPadre.getLeft() == null) {
         centralPanel.getChildren().add(nodo);
         nodo.setLayoutY(padreVisual.getLayoutY() + 70);
-        nodo.setLayoutX(padreVisual.getLayoutX() - Espacio);
-        Node nuevoHijo = new Node(peso);
+        nodo.setLayoutX(padreVisual.getLayoutX() - espacio);
+        Node nuevoHijo = new Node(weight);
         nuevoHijo.visual = nodo;
         nodoLogicoPadre.setLeft(nuevoHijo);
       } else {
         calcularLugar(
-            peso, nodoLogicoPadre.getLeft().visual, nivelActual + 1, nodoLogicoPadre.getLeft());
+            weight, nodoLogicoPadre.getLeft().visual, nivelActual + 1, nodoLogicoPadre.getLeft());
       }
     }
-    if (peso > DatoPadre) {
+    if (weight > datoPadre) {
       if (nodoLogicoPadre.getRight() == null) {
         centralPanel.getChildren().add(nodo);
         nodo.setLayoutY(padreVisual.getLayoutY() + 70);
-        nodo.setLayoutX(padreVisual.getLayoutX() + Espacio);
-        Node nuevoHijo = new Node(peso);
+        nodo.setLayoutX(padreVisual.getLayoutX() + espacio);
+        Node nuevoHijo = new Node(weight);
         nuevoHijo.visual = nodo;
         nodoLogicoPadre.setRight(nuevoHijo);
       } else {
         calcularLugar(
-            peso, nodoLogicoPadre.getRight().visual, nivelActual + 1, nodoLogicoPadre.getRight());
+            weight, nodoLogicoPadre.getRight().visual, nivelActual + 1, nodoLogicoPadre.getRight());
       }
     }
   }
