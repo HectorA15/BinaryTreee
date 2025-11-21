@@ -1,5 +1,6 @@
 package org.example;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -37,15 +38,13 @@ public class UI extends Application {
   // capa para dibujar las líneas (debe estar detrás de los botones)
   Pane edgesLayer;
 
-  Boolean eliminar = false;
+  int modeCount = 0;
 
   Node datoRaiz;
   int datoNuevo;
-  int click;
-  String text;
 
-  Image addImage, deleteImage;
-  ImageView addView, deleteView;
+  Image addImage, deleteImage, searchImage;
+  ImageView addView, deleteView, searchView;
 
   // <-- keep a reference to the tree for general use
   BinaryTree arbol;
@@ -54,8 +53,10 @@ public class UI extends Application {
   public void start(@NotNull Stage stage) throws Exception {
     addImage = new Image(this.getClass().getResourceAsStream("/images/add.png"));
     deleteImage = new Image(this.getClass().getResourceAsStream("/images/delete.png"));
+    searchImage = new Image(this.getClass().getResourceAsStream("/images/search.png"));
     addView = new ImageView(addImage);
     deleteView = new ImageView(deleteImage);
+    searchView = new ImageView(searchImage);
     // adjust icon size
     addView.setFitWidth(18);
     addView.setFitHeight(18);
@@ -63,7 +64,9 @@ public class UI extends Application {
     deleteView.setFitWidth(18);
     deleteView.setFitHeight(18);
     deleteView.setPreserveRatio(true);
-
+    searchView.setFitWidth(18);
+    searchView.setFitHeight(18);
+    searchView.setPreserveRatio(true);
     // move tree to a class field
     arbol = new BinaryTree();
 
@@ -82,7 +85,14 @@ public class UI extends Application {
 
     // add edgesLayer first so it's behind other children
     centralPanel.getChildren().add(edgesLayer);
-
+    // credits
+    Text creditsText = new Text();
+    creditsText.setText("Made by @HectorA15 && @Angelsol2");
+    creditsText.getStyleClass().add("typed-text");
+    creditsText.setFill(Color.DIMGRAY);
+    AnchorPane.setLeftAnchor(creditsText, 10.0);
+    AnchorPane.setTopAnchor(creditsText, 10.0);
+    centralPanel.getChildren().add(creditsText);
     // order text
     Text orderText = new Text();
     orderText.getStyleClass().add("typed-text");
@@ -97,7 +107,6 @@ public class UI extends Application {
     AnchorPane.setLeftAnchor(orderPreText, 10.0);
     AnchorPane.setBottomAnchor(orderPreText, 30.0);
     centralPanel.getChildren().add(orderPreText);
-
     // postOrder text
     Text orderPostText = new Text();
     orderPostText.getStyleClass().add("typed-text");
@@ -157,18 +166,23 @@ public class UI extends Application {
 
     switchMode.setOnAction(
         Event -> {
-          if (eliminar == true) {
-            mode.setGraphic(addView);
-            eliminar = false;
-          } else {
-            mode.setGraphic(deleteView);
-            eliminar = true;
+          modeCount = (modeCount + 1) % 3;
+          switch (modeCount) {
+            case 0:
+              mode.setGraphic(addView);
+              break;
+            case 1:
+              mode.setGraphic(deleteView);
+              break;
+            case 2:
+              mode.setGraphic(searchView);
+              break;
           }
         });
 
     mode.setOnAction(
         event -> {
-          if (!eliminar) {
+          if (modeCount == 0) {
             String txt = textField.getText();
             if (txt == null || txt.trim().isEmpty()) return;
             int val;
@@ -194,12 +208,12 @@ public class UI extends Application {
               datoNuevo = val;
               textField.clear();
               calcularLugar(datoNuevo, raiz, 1, datoRaiz);
-              nodo.setStyle("-fx-background-radius: 50%;");
+              nodo.getStyleClass().add("button");
               // after inserting, recalculate positions so everything stays aligned
               redrawTree();
               updateOrdersText(orderText, orderPreText, orderPostText);
             }
-          } else {
+          } else if (modeCount == 1) {
             String txt = textField.getText();
             if (txt == null || txt.trim().isEmpty()) return;
             int val;
@@ -245,13 +259,34 @@ public class UI extends Application {
               redrawTree();
               updateOrdersText(orderText, orderPreText, orderPostText);
             }
+          } else if (modeCount == 2) { // search mode
+            String txt = textField.getText();
+            if (txt == null || txt.trim().isEmpty()) return;
+            int val;
+            try {
+              val = Integer.parseInt(txt.trim());
+            } catch (NumberFormatException ex) {
+              return;
+            }
+
+            Node foundNode = arbol.search(val);
+            if (foundNode != null && foundNode.visual != null) {
+              // highlight the found node
+              foundNode.visual.setStyle(
+                  "-fx-border-color: red; -fx-border-width: 3px;  -fx-border-radius: 8px");
+              // remove highlight after a short delay
+              PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+              pause.setOnFinished(ev -> foundNode.visual.setStyle(""));
+              pause.play();
+            }
+            textField.clear();
           }
         });
 
     Scene escena = new Scene(panelPrincipal, 800, 600);
     String css = this.getClass().getResource("/styles.css").toExternalForm();
     escena.getStylesheets().add(css);
-    stage.setTitle("prueba");
+    stage.setTitle("Binary Tree Visualization");
     stage.setScene(escena);
     stage.show();
 
@@ -278,26 +313,20 @@ public class UI extends Application {
 
   // reposition all nodes and redraw edges
   public void redrawTree() {
-
     if (datoRaiz == null || datoRaiz.visual == null) {
-      // clear edges if no nodes
-      edgesLayer.getChildren().clear();
+      edgesLayer.getChildren().clear(); // clear edges if no nodes
       return;
     }
-
     // Ensure the root Button is present in the panel (after edgesLayer and orderText)
     if (!centralPanel.getChildren().contains(datoRaiz.visual)) {
       centralPanel.getChildren().add(datoRaiz.visual);
     }
-
     // Position the root at the center
-    double centerX = centralPanel.getWidth() / 2;
+    double centerX = getViewportWidth() / 2;
     datoRaiz.visual.setLayoutX(centerX);
     datoRaiz.visual.setLayoutY(30);
-
     // Reposition children recursively
     positionChildrenRecursively(datoRaiz, 1);
-
     // after layout updated, redraw edges using real bounds
     Platform.runLater(this::redrawEdges);
   }
@@ -307,7 +336,8 @@ public class UI extends Application {
     if (nodoLogicoPadre == null || nodoLogicoPadre.visual == null) return;
 
     Button padreVisual = nodoLogicoPadre.visual;
-    double Espacio = (centralPanel.getWidth() / 2) / Math.pow(2, nivelActual);
+      double available = getViewportWidth();
+    double espacio = (available / 2) / Math.pow(2, nivelActual);
 
     if (nodoLogicoPadre.getLeft() != null) {
       Node leftNode = nodoLogicoPadre.getLeft();
@@ -317,7 +347,7 @@ public class UI extends Application {
       }
       if (leftNode.visual != null) {
         leftNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
-        leftNode.visual.setLayoutX(padreVisual.getLayoutX() - Espacio);
+        leftNode.visual.setLayoutX(padreVisual.getLayoutX() - espacio);
       }
       positionChildrenRecursively(leftNode, nivelActual + 1);
     }
@@ -329,7 +359,7 @@ public class UI extends Application {
       }
       if (rightNode.visual != null) {
         rightNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
-        rightNode.visual.setLayoutX(padreVisual.getLayoutX() + Espacio);
+        rightNode.visual.setLayoutX(padreVisual.getLayoutX() + espacio);
       }
       positionChildrenRecursively(rightNode, nivelActual + 1);
     }
@@ -401,7 +431,8 @@ public class UI extends Application {
   // calcula el lugar del nuevo nodo y lo inserta en el panel central
   public void calcularLugar(int weight, Button padreVisual, int nivelActual, Node nodoLogicoPadre) {
     int datoPadre = (Integer.parseInt(padreVisual.getText()));
-    double espacio = (centralPanel.getWidth() / 2) / Math.pow(2, nivelActual);
+    double available = getViewportWidth();
+    double espacio = (available / 2) / Math.pow(2, nivelActual);
     if (weight < datoPadre) {
       if (nodoLogicoPadre.getLeft() == null) {
         centralPanel.getChildren().add(nodo);
@@ -429,4 +460,9 @@ public class UI extends Application {
       }
     }
   }
+
+    private double getViewportWidth() {
+        double vpWidth = scroll.getViewportBounds().getWidth();
+        return vpWidth > 0 ? vpWidth : centralPanel.getWidth();
+    }
 }

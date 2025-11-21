@@ -82,6 +82,21 @@ public class BinaryTree {
       System.out.println("Deleted node: " + weight);
       return true;
   }
+    //search node
+    public Node search(int weight) {
+    Node current = root;
+    while (current != null) {
+      if (weight == current.getWeight()) {
+        return current;
+      } else if (weight < current.getWeight()) {
+        current = current.getLeft();
+      } else {
+        current = current.getRight();
+      }
+    }
+    return null;
+  }
+
 
   public Node setRoot(Node root) {
     this.root = root;

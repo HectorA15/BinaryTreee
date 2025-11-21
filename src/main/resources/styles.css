@@ -42,6 +42,15 @@
     -fx-font-size: 12;
 }
 
+.button-highlighted {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-font-size: 12;
+}
+
 .node {
     -fx-background-color: #6a7790;
     -fx-text-fill: white;
