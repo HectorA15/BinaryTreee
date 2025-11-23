@@ -1,5 +1,5 @@
 
-.bottom-bar{
+.bottom-bar {
     -fx-background-color: #21252b;
     -fx-padding: 10px;
     -fx-background-insets: 0;
@@ -8,7 +8,7 @@
     -fx-faint-focus-color: transparent;
 }
 
-.typed-text{
+.typed-text {
     -fx-text-color: white;
     -fx-background-color: white;
     -fx-font-size: 14px;
@@ -17,24 +17,25 @@
 }
 
 .scroll-pane {
-  -fx-background-color: #282c34;
-  -fx-background-insets: 0;
-  -fx-border-color: transparent;
+    -fx-background-color: #282c34;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
 }
 
 .central-panel {
-  -fx-background-color: #282c34;
-  -fx-padding: 0;
-  -fx-border-color: transparent;
+    -fx-background-color: #282c34;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
 }
 
 .text-box {
-  -fx-background-color: #323844;
-  -fx-text-fill: white;
-  -fx-padding: 6 12 6 12;
-  -fx-font-size: 12;
-  -fx-font-weight: bold;
+    -fx-background-color: #323844;
+    -fx-text-fill: white;
+    -fx-padding: 6 12 6 12;
+    -fx-font-size: 12;
+    -fx-font-weight: bold;
 }
+
 .clear-button {
     -fx-background-color: transparent;
     -fx-text-fill: white;
@@ -42,6 +43,7 @@
     -fx-border-color: transparent;
     -fx-font-size: 12;
 }
+
 .button {
     -fx-background-color: #323844;
     -fx-text-fill: white;
@@ -68,4 +70,36 @@
     -fx-background-radius: 8;
     -fx-border-color: transparent;
     -fx-font-size: 12;
+}
+
+.notification-popup {
+    -fx-fill: white;
+    -fx-background-color: #047e34;
+    -fx-text-fill: white;
+    -fx-padding: 6 12 6 12;
+    -fx-border-color: transparent;
+    -fx-border-radius: 5px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 5, 0.0, 0, 0);
+    -fx-background-radius: 5px;
+    -fx-background-insets: 0;
+    -fx-alignment: center;
+    -fx-spacing: 10px;
+}
+
+.notification-popup.notif-success {
+    -fx-background-color: #047e34;
+}
+
+.notification-popup.notif-error {
+    -fx-background-color: #ff0000;
+}
+
+.notification-popup.notif-warning {
+    -fx-background-color: #ff9900;
+}
+
+.notification-popup.notif-info {
+    -fx-background-color: #007bff;
 }

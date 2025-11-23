@@ -19,6 +19,8 @@ import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
+
+import javax.print.DocFlavor;
 import java.util.Objects;
 
 public class UI extends Application {
@@ -33,6 +35,7 @@ public class UI extends Application {
   HBox bottomBar;
   Pane centralPanel;
   Pane edgesLayer;
+  StackPane rootStack;
 
   TreeNode datoRaiz;
   int modeCount = 0;
@@ -52,6 +55,7 @@ public class UI extends Application {
   Text orderText;
   Text orderPreText;
   Text orderPostText;
+
   // como es una variable estática final, o sea que nunca va a cambiar
   // se escribe en mayúsculas y se separa con guiones bajos
   private static final String ORDER_TEXT_COLOR_HEX = "#b8c1cc";
@@ -169,6 +173,7 @@ public class UI extends Application {
 
           // update orders text
           updateOrdersText();
+          Notification.show("SUCCESS", rootStack, "Now it's clear", 2000);
         });
   }
 
@@ -220,6 +225,7 @@ public class UI extends Application {
       updateOrdersText();
       textField.clear();
     } else {
+
       Button newNode = new Button(String.valueOf(val));
       newNode.getStyleClass().add("button");
       calcularLugar(val, root, 1, datoRaiz, newNode);
@@ -235,7 +241,10 @@ public class UI extends Application {
    y Region. Imaginatelo como otro arbol que de ahi parten todos los métodos para crear lo visual*/
   private void handleDelete(int val) {
     boolean deleted = arbol.delete(val);
-    if (!deleted) return;
+    if (!deleted) {
+      Notification.show("WARNING", rootStack, "There is nothing to delete", 2000);
+      return;
+    }
     // search and remove the button from the centralPanel
     Button toRemove = null;
     /*lo que hace esto es que child es una variable que apunta a cada nodo (objeto visual que se crea)
@@ -247,11 +256,13 @@ public class UI extends Application {
       if (child instanceof Button b
           && b.getText().equals(String.valueOf(val))) { // check if text matches
         toRemove = b; // set a button to remove
+
         break; // exit loop once found
       }
     }
     if (toRemove != null) centralPanel.getChildren().remove(toRemove); // remove from panel
     textField.clear();
+
     // --- synchronize the UI with the logical tree after delete ---
     TreeNode newRoot = arbol.getRoot(); // get current logical root
     datoRaiz = newRoot;
@@ -278,6 +289,8 @@ public class UI extends Application {
       PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
       pause.setOnFinished(ev -> foundTreeNode.getVisual().setStyle(""));
       pause.play();
+    } else {
+      Notification.show("WARNING", rootStack, "Node not found", 2000);
     }
     textField.clear();
   }
@@ -288,7 +301,7 @@ public class UI extends Application {
     try {
       return Integer.parseInt(txt.trim());
     } catch (NumberFormatException ex) {
-      // opcional: mostrar notificación segura
+      Notification.show("ERROR", rootStack, "Invalid Weight", 2000);
       textField.clear();
       return null;
     }
@@ -303,7 +316,7 @@ public class UI extends Application {
             case 0 -> modeButton.setGraphic(addView);
             case 1 -> modeButton.setGraphic(deleteView);
             case 2 -> modeButton.setGraphic(searchView);
-            default -> showNotification("ERROR", "Unknown mode", "", 3);
+            default -> Notification.show("ERROR", rootStack, "Invalid mode", 2000);
           }
         });
   }
@@ -317,7 +330,7 @@ public class UI extends Application {
             case 0 -> handleAdd(val);
             case 1 -> handleDelete(val);
             case 2 -> handleSearch(val);
-            default -> showNotification("ERROR", "Unknown mode", "", 3);
+            default -> Notification.show("ERROR", rootStack, "Invalid mode", 2000);
           }
         });
   }
@@ -325,14 +338,6 @@ public class UI extends Application {
   private void createActionButtons() {
     configureSwitchMode();
     configureModeButton();
-  }
-
-  private void showNotification(String type, String title, String message, int duration) {
-    Alert alert = new Alert(Alert.AlertType.valueOf(type));
-    alert.setTitle(title);
-    alert.setHeaderText(null);
-    alert.setContentText(message);
-    alert.show();
   }
 
   @Override
@@ -356,9 +361,10 @@ public class UI extends Application {
 
     // configura listeners/acciones (usa los botones ya creados)
     createActionButtons();
-
+    rootStack = new StackPane(scroll);
     panelPrincipal.setBottom(bottomBar);
-    panelPrincipal.setCenter(scroll);
+    panelPrincipal.setCenter(rootStack);
+
     // show stage
     Scene escena = new Scene(panelPrincipal, 800, 600);
     String css =
@@ -542,6 +548,7 @@ public class UI extends Application {
         nuevoHijo.setVisual(newButton);
         nodoLogicoPadre.setRight(nuevoHijo);
       } else {
+
         calcularLugar(
             weight,
             nodoLogicoPadre.getRight().getVisual(),
@@ -549,6 +556,10 @@ public class UI extends Application {
             nodoLogicoPadre.getRight(),
             newButton);
       }
+    } else if (weight == datoPadre) {
+      Notification.show("WARNING", rootStack, "Node already exists", 2000);
+    } else {
+      Notification.show("ERROR", rootStack, "Invalid weight", 2000);
     }
   }
 
