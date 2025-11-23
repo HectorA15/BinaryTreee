@@ -49,7 +49,7 @@ public class UI extends Application {
   ImageView searchView;
   ImageView clearView;
   ImageView aleatoryView;
-
+  AnchorPane overlayPane;
   BinaryTree arbol;
 
   Text creditsText;
@@ -144,11 +144,25 @@ public class UI extends Application {
     scroll.getStyleClass().add("scroll-pane");
     scroll.setFitToWidth(true);
     scroll.setFitToHeight(true);
+    scroll.setPannable(true);
+    scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+    scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
     // Initialize tree (no nodes yet)
     arbol.inOrder();
     arbol.preOrder();
     arbol.postOrder();
+  }
+
+  private void createOverlayPane() {
+    overlayPane = new AnchorPane();
+    overlayPane.getStyleClass().add("overlay-pane");
+
+    overlayPane.prefWidthProperty().bind(scroll.widthProperty());
+    overlayPane.prefHeightProperty().bind(scroll.heightProperty());
+
+    overlayPane.setMouseTransparent(false);
+    overlayPane.setPickOnBounds(false);
   }
 
   private void createClearButton() {
@@ -175,8 +189,8 @@ public class UI extends Application {
       addEfectoHover(clearButton);
     }
 
-    if (!centralPanel.getChildren().contains(clearButton)) {
-      centralPanel.getChildren().add(clearButton);
+    if (!overlayPane.getChildren().contains(clearButton)) {
+      overlayPane.getChildren().add(clearButton);
     }
 
     clearButton.setOnAction(
@@ -190,13 +204,6 @@ public class UI extends Application {
           centralPanel.getChildren().clear();
           centralPanel.getChildren().add(edgesLayer); // re-add edges layer
           edgesLayer.getChildren().clear();
-
-          // re-add texts and buttons
-          centralPanel
-              .getChildren()
-              .addAll(creditsText, orderText, orderPreText, orderPostText, clearButton);
-
-          // update orders text
 
           updateOrdersText();
           Notification.show("SUCCESS", rootStack, "Tree cleared", 2000);
@@ -222,7 +229,7 @@ public class UI extends Application {
     AnchorPane.setLeftAnchor(orderPostText, 10.0);
     AnchorPane.setBottomAnchor(orderPostText, 50.0);
 
-    centralPanel.getChildren().addAll(orderText, orderPreText, orderPostText);
+    overlayPane.getChildren().addAll(orderText, orderPreText, orderPostText);
     updateOrdersText();
   }
 
@@ -244,7 +251,7 @@ public class UI extends Application {
     creditsText.setFill(Color.DIMGRAY);
     AnchorPane.setLeftAnchor(creditsText, 10.0);
     AnchorPane.setTopAnchor(creditsText, 10.0);
-    centralPanel.getChildren().add(creditsText);
+    overlayPane.getChildren().add(creditsText);
   }
 
   // -----------handlers for the method configureModeButton-----------
@@ -424,6 +431,7 @@ public class UI extends Application {
     configureModeButton();
   }
 
+  // ----------------------------------- START ----------------------------
   @Override
   public void start(Stage stage) throws Exception {
     arbol = new BinaryTree();
@@ -436,6 +444,7 @@ public class UI extends Application {
     // barra inferior que usa las ImageViews ya cargadas
     createBottomBar();
 
+    createOverlayPane();
     // botones y textos que dependen del centralPanel y las imagenes
     createClearButton();
     createCreditsText();
@@ -445,7 +454,7 @@ public class UI extends Application {
 
     // configura listeners/acciones (usa los botones ya creados)
     createActionButtons();
-    rootStack = new StackPane(scroll);
+    rootStack = new StackPane(scroll, overlayPane);
     panelPrincipal.setBottom(bottomBar);
     panelPrincipal.setCenter(rootStack);
 
@@ -479,6 +488,10 @@ public class UI extends Application {
     updateOrdersText();
   }
 
+  // -----------------------------------------------------------------------|
+  // ---------------------- HELPER METHODS ------------------------------|
+  // ------------------------------------------------------------------|
+
   // reposition all nodes and redraw edges
   public void redrawTree() {
     if (datoRaiz == null || datoRaiz.getVisual() == null) {
@@ -489,7 +502,7 @@ public class UI extends Application {
     if (!centralPanel.getChildren().contains(datoRaiz.getVisual())) {
       centralPanel.getChildren().add(datoRaiz.getVisual());
     }
-    PositionNodes(datoRaiz);
+    positionNodes(datoRaiz);
     // after layout updated, redraw edges using real bounds
     Platform.runLater(this::redrawEdges);
   }
@@ -548,7 +561,7 @@ public class UI extends Application {
 
   // calcula el lugar del nuevo nodo y lo inserta en el panel central
 
-  private void PositionNodes(TreeNode nodoLogicoPadre) {
+  private void positionNodes(TreeNode nodoLogicoPadre) {
 
     AtomicInteger counter = new AtomicInteger(0);
     Map<TreeNode, Integer> indexMap = new HashMap<>();
