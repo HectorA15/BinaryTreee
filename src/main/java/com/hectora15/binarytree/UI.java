@@ -11,6 +11,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -105,6 +106,7 @@ public class UI extends Application {
     bottomBar.setSpacing(10);
     bottomBar.setPadding(new Insets(10, 10, 10, 10));
     bottomBar.setAlignment(Pos.CENTER);
+    bottomBar.setFocusTraversable(false);
 
     // initialize buttons and text field
     switchModeButton = new Button("Switch Mode");
@@ -162,8 +164,11 @@ public class UI extends Application {
     overlayPane.prefWidthProperty().bind(scroll.widthProperty());
     overlayPane.prefHeightProperty().bind(scroll.heightProperty());
 
+    overlayPane.setFocusTraversable(false);
     overlayPane.setMouseTransparent(false);
     overlayPane.setPickOnBounds(false);
+
+
   }
 
   private void createClearButton() {
@@ -330,7 +335,7 @@ public class UI extends Application {
 
       if (nodeToDelete.getVisual() != null) {
           centralPanel.getChildren().remove(nodeToDelete.getVisual());
-          // opcional: nodeToDelete.setVisual(null); // limpiar referencia
+          nodeToDelete.setVisual(null); // limpiar referencia
       }
 
       boolean deleted = arbol.delete(val);
@@ -457,7 +462,7 @@ public class UI extends Application {
     centralPanel.widthProperty().addListener((_obs, _oldVal, _newVal) -> redrawTree());
     centralPanel.heightProperty().addListener((_obs, _oldVal, _newVal) -> redrawTree());
 
-    escena.setOnKeyPressed(
+    escena.addEventFilter(KeyEvent.KEY_PRESSED,
         event -> {
           if (event.getCode() == KeyCode.ENTER) {
             modeButton.fire();
@@ -465,6 +470,7 @@ public class UI extends Application {
             Platform.exit();
           } else if (event.getCode() == KeyCode.TAB) {
             switchModeButton.fire();
+            event.consume();
           }
         });
 

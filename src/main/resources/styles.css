@@ -76,7 +76,6 @@
 
 .notification-popup {
     -fx-fill: white;
-    -fx-background-color: #047e34;
     -fx-text-fill: white;
     -fx-padding: 6 12 6 12;
     -fx-border-color: transparent;
@@ -89,7 +88,7 @@
 }
 
 .notification-popup.notif-success {
-    -fx-background-color: #047e34;
+    -fx-background-color: #198a46;
 }
 
 .notification-popup.notif-error {
