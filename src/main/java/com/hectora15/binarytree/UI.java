@@ -1,4 +1,4 @@
-package org.example;
+package com.hectora15.binarytree;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -52,8 +52,88 @@ public class UI extends Application {
   Text orderText;
   Text orderPreText;
   Text orderPostText;
-
+  // como es una variable estatica final, osea que nunca va cambiar
+  // se escribe todo en mayusculas y separados por guiones bajos
   private static final String ORDER_TEXT_COLOR_HEX = "#b8c1cc";
+
+  private void createImages() {
+    addImage =
+        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/add.png")));
+    deleteImage =
+        new Image(
+            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/delete.png")));
+    searchImage =
+        new Image(
+            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/search.png")));
+    clearImage =
+        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/clear.png")));
+    addView = new ImageView(addImage);
+    deleteView = new ImageView(deleteImage);
+    searchView = new ImageView(searchImage);
+    clearView = new ImageView(clearImage);
+    // adjust icon size
+    addView.setFitWidth(18);
+    addView.setFitHeight(18);
+    addView.setPreserveRatio(true);
+    deleteView.setFitWidth(18);
+    deleteView.setFitHeight(18);
+    deleteView.setPreserveRatio(true);
+    searchView.setFitWidth(18);
+    searchView.setFitHeight(18);
+    searchView.setPreserveRatio(true);
+  }
+
+  private void createBottomBar() {
+    bottomBar = new HBox();
+    bottomBar.getStyleClass().add("bottom-bar");
+    bottomBar.setMinHeight(60);
+    bottomBar.setSpacing(10);
+    bottomBar.setPadding(new Insets(10, 10, 10, 10));
+    bottomBar.setAlignment(Pos.CENTER);
+
+    // initialize buttons and text field
+    switchModeButton = new Button("Switch Mode");
+    modeButton = new Button();
+    modeButton.setGraphic(addView);
+    textField = new TextField();
+    textField.getStyleClass().add("text-box");
+    // make text field expand to fill available space
+    textField.setMaxWidth(Double.MAX_VALUE);
+    textField.setMaxHeight(Double.MAX_VALUE);
+    HBox.setHgrow(textField, Priority.ALWAYS);
+
+    bottomBar
+        .getChildren()
+        .addAll(
+            switchModeButton, modeButton, textField); // add buttons and text field to bottom bar
+  }
+
+  private void createCenterPanel() {
+    centralPanel = new AnchorPane();
+    centralPanel.getStyleClass().add("central-panel");
+    centralPanel.setFocusTraversable(false);
+    centralPanel.setMaxWidth(Double.MAX_VALUE);
+    centralPanel.setMaxHeight(Double.MAX_VALUE);
+
+    // create a dedicated layer for edges (lines) and add it as the bottom-most child
+    edgesLayer = new Pane();
+    edgesLayer.setPickOnBounds(false); // don't intercept mouse events
+    edgesLayer.setMouseTransparent(true);
+
+    // add edges layer first so it's at the back
+    centralPanel.getChildren().add(edgesLayer);
+
+    scroll = new ScrollPane(centralPanel);
+    scroll.setFocusTraversable(false);
+    scroll.getStyleClass().add("scroll-pane");
+    scroll.setFitToWidth(true);
+    scroll.setFitToHeight(true);
+
+    // Initialize tree (no nodes yet)
+    arbol.inOrder();
+    arbol.preOrder();
+    arbol.postOrder();
+  }
 
   private void createClearButton() {
 
@@ -115,31 +195,6 @@ public class UI extends Application {
     updateOrdersText();
   }
 
-  private void createBottomBar() {
-    bottomBar = new HBox();
-    bottomBar.getStyleClass().add("bottom-bar");
-    bottomBar.setMinHeight(60);
-    bottomBar.setSpacing(10);
-    bottomBar.setPadding(new Insets(10, 10, 10, 10));
-    bottomBar.setAlignment(Pos.CENTER);
-
-    // initialize buttons and text field
-    switchModeButton = new Button("Switch Mode");
-    modeButton = new Button();
-    modeButton.setGraphic(addView);
-    textField = new TextField();
-    textField.getStyleClass().add("text-box");
-    // make text field expand to fill available space
-    textField.setMaxWidth(Double.MAX_VALUE);
-    textField.setMaxHeight(Double.MAX_VALUE);
-    HBox.setHgrow(textField, Priority.ALWAYS);
-
-    bottomBar
-        .getChildren()
-        .addAll(
-            switchModeButton, modeButton, textField); // add buttons and text field to bottom bar
-  }
-
   private void createCreditsText() {
     creditsText = new Text();
     creditsText.setText("Made by @HectorA15 && @Angelsol2");
@@ -174,6 +229,7 @@ public class UI extends Application {
     }
   }
 
+  // angel lee esto!!!
   /* ¿Cómo funciona el javafx.Scene.Node? bueno es como la raíz, la base de todos los elementos visuales,
   tiene subclases como Control (para hacer botones, paneles, etc.), Parent (el que usas para el getChildren(),
    y Region. Imaginatelo como otro arbol que de ahi parten todos los métodos para crear lo visual*/
@@ -272,60 +328,6 @@ public class UI extends Application {
     configureModeButton();
   }
 
-  private void createCenterPanel() {
-    centralPanel = new AnchorPane();
-    centralPanel.getStyleClass().add("central-panel");
-    centralPanel.setFocusTraversable(false);
-    centralPanel.setMaxWidth(Double.MAX_VALUE);
-    centralPanel.setMaxHeight(Double.MAX_VALUE);
-
-    // create a dedicated layer for edges (lines) and add it as the bottom-most child
-    edgesLayer = new Pane();
-    edgesLayer.setPickOnBounds(false); // don't intercept mouse events
-    edgesLayer.setMouseTransparent(true);
-
-    // add edges layer first so it's at the back
-    centralPanel.getChildren().add(edgesLayer);
-
-    scroll = new ScrollPane(centralPanel);
-    scroll.setFocusTraversable(false);
-    scroll.getStyleClass().add("scroll-pane");
-    scroll.setFitToWidth(true);
-    scroll.setFitToHeight(true);
-
-    // Initialize tree (no nodes yet)
-    arbol.inOrder();
-    arbol.preOrder();
-    arbol.postOrder();
-  }
-
-  private void createImages() {
-    addImage =
-        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/add.png")));
-    deleteImage =
-        new Image(
-            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/delete.png")));
-    searchImage =
-        new Image(
-            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/search.png")));
-    clearImage =
-        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/clear.png")));
-    addView = new ImageView(addImage);
-    deleteView = new ImageView(deleteImage);
-    searchView = new ImageView(searchImage);
-    clearView = new ImageView(clearImage);
-    // adjust icon size
-    addView.setFitWidth(18);
-    addView.setFitHeight(18);
-    addView.setPreserveRatio(true);
-    deleteView.setFitWidth(18);
-    deleteView.setFitHeight(18);
-    deleteView.setPreserveRatio(true);
-    searchView.setFitWidth(18);
-    searchView.setFitHeight(18);
-    searchView.setPreserveRatio(true);
-  }
-
   private void showNotification(String type, String title, String message, int duration) {
     Alert alert = new Alert(Alert.AlertType.valueOf(type));
     alert.setTitle(title);
@@ -359,9 +361,11 @@ public class UI extends Application {
     stage.setScene(escena);
     stage.show();
 
-    // if the panel size changes, rearrange nodes
-    centralPanel.widthProperty().addListener((obs, oldVal, newVal) -> redrawTree());
-    centralPanel.heightProperty().addListener((obs, oldVal, newVal) -> redrawTree());
+    // if the panel size changes, rearrange nodes === Esto es lambda ====
+    // apenas le entiendo, pero básicamente cada vez que cambia un valor llama a redrawTree()
+    // se les pone un _ al inicio de la variable para indicar que realmente no se utilizan
+    centralPanel.widthProperty().addListener((_obs, _oldVal, _newVal) -> redrawTree());
+    centralPanel.heightProperty().addListener((_obs, _oldVal, _newVal) -> redrawTree());
 
     escena.setOnKeyPressed(
         event -> {

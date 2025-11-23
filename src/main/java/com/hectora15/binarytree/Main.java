@@ -1,4 +1,4 @@
-package org.example;
+package com.hectora15.binarytree;
 
 import javafx.application.Application;
 

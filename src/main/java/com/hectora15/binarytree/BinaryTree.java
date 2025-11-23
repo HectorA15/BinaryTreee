@@ -1,4 +1,4 @@
-package org.example;
+package com.hectora15.binarytree;
 
 public class BinaryTree {
 
