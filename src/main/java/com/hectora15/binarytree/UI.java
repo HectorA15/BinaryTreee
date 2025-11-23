@@ -567,7 +567,7 @@ public class UI extends Application {
     Map<TreeNode, Integer> indexMap = new HashMap<>();
     Map<TreeNode, Integer> levelMap = new HashMap<>();
     int nivelActual = -1;
-    inOrderRec(nodoLogicoPadre, counter, nivelActual, levelMap, indexMap);
+    inOrderRecUI(nodoLogicoPadre, counter, nivelActual, levelMap, indexMap);
 
     int maxIndex = 0;
 
@@ -622,7 +622,7 @@ public class UI extends Application {
     }
   }
 
-  private void inOrderRec(
+  private void inOrderRecUI(
       TreeNode treeNode,
       AtomicInteger counter,
       int nivelActual,
@@ -630,10 +630,10 @@ public class UI extends Application {
       Map<TreeNode, Integer> indexMapField) {
     nivelActual++;
     if (treeNode == null) return;
-    inOrderRec(treeNode.getLeft(), counter, nivelActual, levelMap, indexMapField);
+    inOrderRecUI(treeNode.getLeft(), counter, nivelActual, levelMap, indexMapField);
     levelMap.put(treeNode, levelMap.getOrDefault(treeNode, nivelActual));
     indexMapField.put(treeNode, counter.getAndIncrement());
-    inOrderRec(treeNode.getRight(), counter, nivelActual, levelMap, indexMapField);
+    inOrderRecUI(treeNode.getRight(), counter, nivelActual, levelMap, indexMapField);
   }
 
   // get the current viewport width, fallback to centralPanel width
