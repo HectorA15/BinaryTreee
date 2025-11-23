@@ -18,12 +18,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.application.Application;
-import javafx.scene.control.Alert;
 
-import javax.print.DocFlavor;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UI extends Application {
   Button switchModeButton;
@@ -230,15 +227,16 @@ public class UI extends Application {
   }
 
   public void updateOrdersText() {
-        String textOrder = arbol.preOrder();
-        orderText.setText("PreOrder:\t\t" + textOrder);
+    String textOrder = arbol.preOrder();
+    orderText.setText("PreOrder:\t\t" + textOrder);
 
-        String textPre = arbol.inOrder();
-        orderPreText.setText("Inorder:\t\t" + textPre);
+    String textPre = arbol.inOrder();
+    orderPreText.setText("Inorder:\t\t" + textPre);
 
-        String textPost = arbol.postOrder();
-        orderPostText.setText("PostOrder:\t" + textPost);
-    }
+    String textPost = arbol.postOrder();
+    orderPostText.setText("PostOrder:\t" + textPost);
+  }
+
   private void createCreditsText() {
     creditsText = new Text();
     creditsText.setText("Made by @HectorA15 && @Angelsol2");
@@ -452,50 +450,9 @@ public class UI extends Application {
     if (!centralPanel.getChildren().contains(datoRaiz.getVisual())) {
       centralPanel.getChildren().add(datoRaiz.getVisual());
     }
-    // Position the root at the center
-    double centerX = getViewportWidth() / 2;
-    datoRaiz.getVisual().setLayoutX(centerX);
-    datoRaiz.getVisual().setLayoutY(30);
-    // Reposition children recursively
-    positionChildrenRecursively(datoRaiz, 1);
+    PositionNodes(datoRaiz);
     // after layout updated, redraw edges using real bounds
     Platform.runLater(this::redrawEdges);
-  }
-
-  // helper to position children recursively
-  private void positionChildrenRecursively(TreeNode nodoLogicoPadre, int nivelActual) {
-    if (nodoLogicoPadre == null || nodoLogicoPadre.getVisual() == null) return;
-
-    Button padreVisual = nodoLogicoPadre.getVisual();
-    double available = getViewportWidth();
-    double espacio = (available / 2) / Math.pow(2, nivelActual);
-
-    if (nodoLogicoPadre.getLeft() != null) {
-      TreeNode leftTreeNode = nodoLogicoPadre.getLeft();
-      // ensure the Button exists in the panel
-      if (leftTreeNode.getVisual() != null
-          && !centralPanel.getChildren().contains(leftTreeNode.getVisual())) {
-        centralPanel.getChildren().add(leftTreeNode.getVisual());
-      }
-      if (leftTreeNode.getVisual() != null) {
-        leftTreeNode.getVisual().setLayoutY(padreVisual.getLayoutY() + 70);
-        leftTreeNode.getVisual().setLayoutX(padreVisual.getLayoutX() - espacio);
-      }
-      positionChildrenRecursively(leftTreeNode, nivelActual + 1);
-    }
-
-    if (nodoLogicoPadre.getRight() != null) {
-      TreeNode rightTreeNode = nodoLogicoPadre.getRight();
-      if (rightTreeNode.getVisual() != null
-          && !centralPanel.getChildren().contains(rightTreeNode.getVisual())) {
-        centralPanel.getChildren().add(rightTreeNode.getVisual());
-      }
-      if (rightTreeNode.getVisual() != null) {
-        rightTreeNode.getVisual().setLayoutY(padreVisual.getLayoutY() + 70);
-        rightTreeNode.getVisual().setLayoutX(padreVisual.getLayoutX() + espacio);
-      }
-      positionChildrenRecursively(rightTreeNode, nivelActual + 1);
-    }
   }
 
   // draw edges between parent and child nodes
@@ -550,60 +507,42 @@ public class UI extends Application {
     return line;
   }
 
+  public void PositionNodes(
+      int weight, Button padreVisual, TreeNode nodoLogicoPadre, Button newButton) {
+    Map<TreeNode, Integer> indexMap = new HashMap<>();
+    Map<TreeNode, Integer> levelMap = new HashMap<>();
 
-    public void PositionNodes(int weight, Button padreVisual, int nivelActual, TreeNode nodoLogicoPadre, Button newButton){
-      Map<TreeNode, Integer> indexMapField = new HashMap<>();
-
-
-
-    }
-  // calcula el lugar del nuevo nodo y lo inserta en el panel central
-  public void calcularLugar(
-      int weight, Button padreVisual, int nivelActual, TreeNode nodoLogicoPadre, Button newButton) {
-    int datoPadre = (Integer.parseInt(padreVisual.getText()));
+    AtomicInteger counter = new AtomicInteger(0);
+    int nivelActual = -1;
+    double vSpacing = 70;
     double available = getViewportWidth();
-    double espacio = (available / 2) / Math.pow(2, nivelActual);
 
-    if (weight < datoPadre) {
-      if (nodoLogicoPadre.getLeft() == null) {
-        centralPanel.getChildren().add(newButton);
-        newButton.setLayoutY(padreVisual.getLayoutY() + 70);
-        newButton.setLayoutX(padreVisual.getLayoutX() - espacio);
-        TreeNode nuevoHijo = new TreeNode(weight);
-        nuevoHijo.setVisual(newButton);
-        nodoLogicoPadre.setLeft(nuevoHijo);
-      } else {
+    inOrderRec(nodoLogicoPadre, counter, nivelActual, levelMap, indexMap);
 
-        calcularLugar(
-            weight,
-            nodoLogicoPadre.getLeft().getVisual(),
-            nivelActual + 1,
-            nodoLogicoPadre.getLeft(),
-            newButton);
-      }
-    } else if (weight > datoPadre) {
-      if (nodoLogicoPadre.getRight() == null) {
-        centralPanel.getChildren().add(newButton);
-        newButton.setLayoutY(padreVisual.getLayoutY() + 70);
-        newButton.setLayoutX(padreVisual.getLayoutX() + espacio);
-        TreeNode nuevoHijo = new TreeNode(weight);
-        nuevoHijo.setVisual(newButton);
-        nodoLogicoPadre.setRight(nuevoHijo);
-      } else {
+    int maxIndex = 0;
+    int level = 0;
 
-        calcularLugar(
-            weight,
-            nodoLogicoPadre.getRight().getVisual(),
-            nivelActual + 1,
-            nodoLogicoPadre.getRight(),
-            newButton);
-      }
-    } else if (weight == datoPadre) {
-      Notification.show("WARNING", rootStack, "Node already exists", 2000);
-    } else {
-      Notification.show("ERROR", rootStack, "Invalid weight", 2000);
-    }
+
+    double total = maxIndex + 1;
+    double hSpacing = available / total;
+
   }
+
+  private void inOrderRec(
+      TreeNode treeNode,
+      AtomicInteger counter,
+      int nivelActual,
+      Map<TreeNode, Integer> levelMap,
+      Map<TreeNode, Integer> indexMapField) {
+    nivelActual++;
+    if (treeNode == null) return;
+    inOrderRec(treeNode.getLeft(), counter, nivelActual, levelMap, indexMapField);
+    levelMap.put(treeNode, levelMap.getOrDefault(treeNode, nivelActual));
+    indexMapField.put(treeNode, counter.getAndIncrement());
+    inOrderRec(treeNode.getRight(), counter, nivelActual, levelMap, indexMapField);
+  }
+
+  // calcula el lugar del nuevo nodo y lo inserta en el panel central
 
   // get the current viewport width, fallback to centralPanel width
   private double getViewportWidth() {
