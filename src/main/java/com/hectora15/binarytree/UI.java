@@ -18,6 +18,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.application.Application;
+import javafx.scene.Cursor;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -646,6 +647,7 @@ public class UI extends Application {
     b.setOnMouseEntered(
         e -> {
           b.getStyleClass().add("button-highlighted"); // cambio a el uluminado
+          b.setCursor(Cursor.HAND);
         });
     b.setOnMouseExited(
         e -> {
