@@ -61,6 +61,7 @@
 }
 
 .node {
+    -fx-font-size: 14px;
     -fx-background-color: #6a7790;
     -fx-text-fill: white;
     -fx-padding: 6 12 6 12;

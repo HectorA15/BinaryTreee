@@ -18,11 +18,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.application.Application;
+import javafx.scene.control.Alert;
+import java.util.Objects;
 
 public class UI extends Application {
   Button switchModeButton;
   Button modeButton;
-  Button raiz;
+  Button root;
   Button clearButton;
 
   TextField textField;
@@ -32,7 +34,7 @@ public class UI extends Application {
   Pane centralPanel;
   Pane edgesLayer;
 
-  Node datoRaiz;
+  TreeNode datoRaiz;
   int modeCount = 0;
 
   Image addImage;
@@ -50,6 +52,8 @@ public class UI extends Application {
   Text orderText;
   Text orderPreText;
   Text orderPostText;
+
+  private static final String ORDER_TEXT_COLOR_HEX = "#b8c1cc";
 
   private void createClearButton() {
 
@@ -72,7 +76,7 @@ public class UI extends Application {
           // clear logical tree
           arbol = new BinaryTree();
           datoRaiz = null;
-          raiz = null;
+          root = null;
           // clear visual nodes
           centralPanel.getChildren().clear();
           centralPanel.getChildren().add(edgesLayer); // re-add edges layer
@@ -91,19 +95,19 @@ public class UI extends Application {
   private void createOrdersText() {
     orderText = new Text();
     orderText.getStyleClass().add("typed-text");
-    orderText.setFill(javafx.scene.paint.Color.web("#b8c1cc"));
+    orderText.setFill(javafx.scene.paint.Color.web(ORDER_TEXT_COLOR_HEX));
     AnchorPane.setLeftAnchor(orderText, 10.0);
     AnchorPane.setBottomAnchor(orderText, 10.0);
     // preOrder text
     orderPreText = new Text();
     orderPreText.getStyleClass().add("typed-text");
-    orderPreText.setFill(javafx.scene.paint.Color.web("#b8c1cc"));
+    orderPreText.setFill(javafx.scene.paint.Color.web(ORDER_TEXT_COLOR_HEX));
     AnchorPane.setLeftAnchor(orderPreText, 10.0);
     AnchorPane.setBottomAnchor(orderPreText, 30.0);
     // postOrder text
     orderPostText = new Text();
     orderPostText.getStyleClass().add("typed-text");
-    orderPostText.setFill(javafx.scene.paint.Color.web("#b8c1cc"));
+    orderPostText.setFill(javafx.scene.paint.Color.web(ORDER_TEXT_COLOR_HEX));
     AnchorPane.setLeftAnchor(orderPostText, 10.0);
     AnchorPane.setBottomAnchor(orderPostText, 50.0);
 
@@ -146,7 +150,97 @@ public class UI extends Application {
     centralPanel.getChildren().add(creditsText);
   }
 
-  private void createActionButtons() {
+  // -----------handlers for the method configureModeButton-----------
+  private void handleAdd(int val) {
+    if (root == null) { // first node (root)
+      root = new Button(String.valueOf(val));
+      root.getStyleClass().add("button");
+      datoRaiz = new TreeNode(val);
+      datoRaiz.setVisual(root);
+      arbol.setRoot(datoRaiz);
+
+      centralPanel.getChildren().add(root);
+      root.setLayoutX(centralPanel.getWidth() / 2);
+      root.setLayoutY(30);
+      updateOrdersText();
+      textField.clear();
+    } else {
+      Button newNode = new Button(String.valueOf(val));
+      newNode.getStyleClass().add("button");
+      calcularLugar(val, root, 1, datoRaiz, newNode);
+      textField.clear();
+      redrawTree();
+      updateOrdersText();
+    }
+  }
+
+  /* ¿Cómo funciona el javafx.Scene.Node? bueno es como la raíz, la base de todos los elementos visuales,
+  tiene subclases como Control (para hacer botones, paneles, etc.), Parent (el que usas para el getChildren(),
+   y Region. Imaginatelo como otro arbol que de ahi parten todos los métodos para crear lo visual*/
+  private void handleDelete(int val) {
+    boolean deleted = arbol.delete(val);
+    if (!deleted) return;
+    // search and remove the button from the centralPanel
+    Button toRemove = null;
+    /*lo que hace esto es que child es una variable que apunta a cada nodo (objeto visual que se crea)
+    y por cada uno de esos nodos(objetos visuales como botones o paneles) va a verificar cuál es un boton que este dentro
+    del panel central y si el boton tiene el mismo valor que el que querías eliminar, se elimina*/
+    for (javafx.scene.Node child : centralPanel.getChildren()) { // iterate through children
+      // instance of revisa en TIEMPO REAL, si el nodo por el que está pasando es un boton, y al
+      // mismo tiempo de instancia
+      if (child instanceof Button b) { // check if a child is a button - Angel esto revisa que
+        if (b.getText().equals(String.valueOf(val))) { // check if text matches
+          toRemove = b; // set a button to remove
+          break; // exit loop once found
+        }
+      }
+    }
+    if (toRemove != null) centralPanel.getChildren().remove(toRemove); // remove from panel
+    textField.clear();
+    // --- synchronize the UI with the logical tree after delete ---
+    TreeNode newRoot = arbol.getRoot(); // get current logical root
+    datoRaiz = newRoot;
+    if (newRoot != null) {
+      if (newRoot.getVisual() == null) {
+        Button b = new Button(String.valueOf(newRoot.getWeight()));
+        b.getStyleClass().add("button");
+        newRoot.setVisual(b);
+      }
+      root = newRoot.getVisual();
+    } else {
+      root = null;
+    }
+    redrawTree();
+    updateOrdersText();
+  }
+
+  private void handleSearch(int val) {
+    TreeNode foundTreeNode = arbol.search(val);
+    if (foundTreeNode != null && foundTreeNode.getVisual() != null) {
+      foundTreeNode
+          .getVisual()
+          .setStyle("-fx-border-color: red; -fx-border-width: 3px;  -fx-border-radius: 8px");
+      PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+      pause.setOnFinished(ev -> foundTreeNode.getVisual().setStyle(""));
+      pause.play();
+    }
+    textField.clear();
+  }
+
+  private Integer parseInput() {
+    String txt = textField.getText();
+    if (txt == null || txt.trim().isEmpty()) return null;
+    try {
+      return Integer.parseInt(txt.trim());
+    } catch (NumberFormatException ex) {
+      // opcional: mostrar notificación segura
+      textField.clear();
+      return null;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  private void configureSwitchMode() {
     switchModeButton.setOnAction(
         Event -> {
           modeCount = (modeCount + 1) % 3;
@@ -154,107 +248,28 @@ public class UI extends Application {
             case 0 -> modeButton.setGraphic(addView);
             case 1 -> modeButton.setGraphic(deleteView);
             case 2 -> modeButton.setGraphic(searchView);
+            default -> showNotification("ERROR", "Unknown mode", "", 3);
           }
         });
+  }
 
+  private void configureModeButton() {
     modeButton.setOnAction(
         event -> {
-          if (modeCount == 0) { // add mode
-            String txt = textField.getText();
-            if (txt == null || txt.trim().isEmpty()) return;
-            int val;
-            try {
-              val = Integer.parseInt(txt.trim());
-            } catch (NumberFormatException ex) {
-              return;
-            }
-
-            if (raiz == null) { // first node (root)
-              raiz = new Button(String.valueOf(val));
-              raiz.getStyleClass().add("button");
-              datoRaiz = new Node(val);
-              datoRaiz.visual = raiz;
-              arbol.setRoot(datoRaiz);
-
-              centralPanel.getChildren().add(raiz);
-              raiz.setLayoutX(centralPanel.getWidth() / 2);
-              raiz.setLayoutY(30);
-              updateOrdersText();
-              textField.clear();
-            } else {
-              Button newNode = new Button(String.valueOf(val));
-              newNode.getStyleClass().add("button");
-              calcularLugar(val, raiz, 1, datoRaiz, newNode);
-              textField.clear();
-              redrawTree();
-              updateOrdersText();
-            }
-          } else if (modeCount == 1) { // delete mode
-            String txt = textField.getText();
-            if (txt == null || txt.trim().isEmpty()) return; // empty input
-            int val;
-            try {
-              val = Integer.parseInt(txt.trim());
-            } catch (NumberFormatException ex) {
-              return;
-            }
-
-            boolean deleted = arbol.delete(val);
-            if (deleted) {
-              // search and remove the button from centralPanel
-              Button toRemove = null;
-              for (javafx.scene.Node child :
-                  centralPanel.getChildren()) { // iterate through children
-                if (child instanceof Button) { // check if child is a button
-                  Button b = (Button) child; // cast to button
-                  if (b.getText().equals(String.valueOf(val))) { // check if text matches
-                    toRemove = b; // set button to remove
-                    break; // exit loop once found
-                  }
-                }
-              }
-              if (toRemove != null)
-                centralPanel.getChildren().remove(toRemove); // remove from panel
-
-              textField.clear();
-
-              // --- synchronize the UI with the logical tree after delete ---
-              Node newRoot = arbol.getRoot(); // get current logical root
-              datoRaiz = newRoot;
-              if (newRoot != null) {
-                if (newRoot.visual == null) {
-                  Button b = new Button(String.valueOf(newRoot.getWeight()));
-                  b.getStyleClass().add("button");
-                  newRoot.visual = b;
-                }
-                raiz = newRoot.visual;
-              } else {
-                raiz = null;
-              }
-              redrawTree();
-              updateOrdersText();
-            }
-          } else if (modeCount == 2) { // search mode
-            String txt = textField.getText();
-            if (txt == null || txt.trim().isEmpty()) return;
-            int val;
-            try {
-              val = Integer.parseInt(txt.trim());
-            } catch (NumberFormatException ex) {
-              return;
-            }
-
-            Node foundNode = arbol.search(val);
-            if (foundNode != null && foundNode.visual != null) {
-              foundNode.visual.setStyle(
-                  "-fx-border-color: red; -fx-border-width: 3px;  -fx-border-radius: 8px");
-              PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-              pause.setOnFinished(ev -> foundNode.visual.setStyle(""));
-              pause.play();
-            }
-            textField.clear();
+          Integer val = parseInput();
+          if (val == null) return;
+          switch (modeCount) {
+            case 0 -> handleAdd(val);
+            case 1 -> handleDelete(val);
+            case 2 -> handleSearch(val);
+            default -> showNotification("ERROR", "Unknown mode", "", 3);
           }
         });
+  }
+
+  private void createActionButtons() {
+    configureSwitchMode();
+    configureModeButton();
   }
 
   private void createCenterPanel() {
@@ -285,10 +300,16 @@ public class UI extends Application {
   }
 
   private void createImages() {
-    addImage = new Image(this.getClass().getResourceAsStream("/images/add.png"));
-    deleteImage = new Image(this.getClass().getResourceAsStream("/images/delete.png"));
-    searchImage = new Image(this.getClass().getResourceAsStream("/images/search.png"));
-    clearImage = new Image(this.getClass().getResourceAsStream("/images/clear.png"));
+    addImage =
+        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/add.png")));
+    deleteImage =
+        new Image(
+            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/delete.png")));
+    searchImage =
+        new Image(
+            Objects.requireNonNull(this.getClass().getResourceAsStream("/images/search.png")));
+    clearImage =
+        new Image(Objects.requireNonNull(this.getClass().getResourceAsStream("/images/clear.png")));
     addView = new ImageView(addImage);
     deleteView = new ImageView(deleteImage);
     searchView = new ImageView(searchImage);
@@ -303,6 +324,14 @@ public class UI extends Application {
     searchView.setFitWidth(18);
     searchView.setFitHeight(18);
     searchView.setPreserveRatio(true);
+  }
+
+  private void showNotification(String type, String title, String message, int duration) {
+    Alert alert = new Alert(Alert.AlertType.valueOf(type));
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
+    alert.show();
   }
 
   @Override
@@ -323,7 +352,8 @@ public class UI extends Application {
     panelPrincipal.setCenter(scroll);
     // show stage
     Scene escena = new Scene(panelPrincipal, 800, 600);
-    String css = this.getClass().getResource("/styles.css").toExternalForm();
+    String css =
+        Objects.requireNonNull(this.getClass().getResource("/styles.css")).toExternalForm();
     escena.getStylesheets().add(css);
     stage.setTitle("Binary Tree Visualization");
     stage.setScene(escena);
@@ -350,18 +380,18 @@ public class UI extends Application {
 
   // reposition all nodes and redraw edges
   public void redrawTree() {
-    if (datoRaiz == null || datoRaiz.visual == null) {
+    if (datoRaiz == null || datoRaiz.getVisual() == null) {
       edgesLayer.getChildren().clear(); // clear edges if no nodes
       return;
     }
     // Ensure the root Button is present in the panel (after edgesLayer and orderText)
-    if (!centralPanel.getChildren().contains(datoRaiz.visual)) {
-      centralPanel.getChildren().add(datoRaiz.visual);
+    if (!centralPanel.getChildren().contains(datoRaiz.getVisual())) {
+      centralPanel.getChildren().add(datoRaiz.getVisual());
     }
     // Position the root at the center
     double centerX = getViewportWidth() / 2;
-    datoRaiz.visual.setLayoutX(centerX);
-    datoRaiz.visual.setLayoutY(30);
+    datoRaiz.getVisual().setLayoutX(centerX);
+    datoRaiz.getVisual().setLayoutY(30);
     // Reposition children recursively
     positionChildrenRecursively(datoRaiz, 1);
     // after layout updated, redraw edges using real bounds
@@ -369,36 +399,38 @@ public class UI extends Application {
   }
 
   // helper to position children recursively
-  private void positionChildrenRecursively(Node nodoLogicoPadre, int nivelActual) {
-    if (nodoLogicoPadre == null || nodoLogicoPadre.visual == null) return;
+  private void positionChildrenRecursively(TreeNode nodoLogicoPadre, int nivelActual) {
+    if (nodoLogicoPadre == null || nodoLogicoPadre.getVisual() == null) return;
 
-    Button padreVisual = nodoLogicoPadre.visual;
+    Button padreVisual = nodoLogicoPadre.getVisual();
     double available = getViewportWidth();
     double espacio = (available / 2) / Math.pow(2, nivelActual);
 
     if (nodoLogicoPadre.getLeft() != null) {
-      Node leftNode = nodoLogicoPadre.getLeft();
+      TreeNode leftTreeNode = nodoLogicoPadre.getLeft();
       // ensure the Button exists in the panel
-      if (leftNode.visual != null && !centralPanel.getChildren().contains(leftNode.visual)) {
-        centralPanel.getChildren().add(leftNode.visual);
+      if (leftTreeNode.getVisual() != null
+          && !centralPanel.getChildren().contains(leftTreeNode.getVisual())) {
+        centralPanel.getChildren().add(leftTreeNode.getVisual());
       }
-      if (leftNode.visual != null) {
-        leftNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
-        leftNode.visual.setLayoutX(padreVisual.getLayoutX() - espacio);
+      if (leftTreeNode.getVisual() != null) {
+        leftTreeNode.getVisual().setLayoutY(padreVisual.getLayoutY() + 70);
+        leftTreeNode.getVisual().setLayoutX(padreVisual.getLayoutX() - espacio);
       }
-      positionChildrenRecursively(leftNode, nivelActual + 1);
+      positionChildrenRecursively(leftTreeNode, nivelActual + 1);
     }
 
     if (nodoLogicoPadre.getRight() != null) {
-      Node rightNode = nodoLogicoPadre.getRight();
-      if (rightNode.visual != null && !centralPanel.getChildren().contains(rightNode.visual)) {
-        centralPanel.getChildren().add(rightNode.visual);
+      TreeNode rightTreeNode = nodoLogicoPadre.getRight();
+      if (rightTreeNode.getVisual() != null
+          && !centralPanel.getChildren().contains(rightTreeNode.getVisual())) {
+        centralPanel.getChildren().add(rightTreeNode.getVisual());
       }
-      if (rightNode.visual != null) {
-        rightNode.visual.setLayoutY(padreVisual.getLayoutY() + 70);
-        rightNode.visual.setLayoutX(padreVisual.getLayoutX() + espacio);
+      if (rightTreeNode.getVisual() != null) {
+        rightTreeNode.getVisual().setLayoutY(padreVisual.getLayoutY() + 70);
+        rightTreeNode.getVisual().setLayoutX(padreVisual.getLayoutX() + espacio);
       }
-      positionChildrenRecursively(rightNode, nivelActual + 1);
+      positionChildrenRecursively(rightTreeNode, nivelActual + 1);
     }
   }
 
@@ -410,21 +442,21 @@ public class UI extends Application {
   }
 
   // helper to draw edges recursively
-  private void drawEdgesRecursively(Node nodoLogico) {
-    if (nodoLogico == null || nodoLogico.visual == null) return;
-    Button parentBtn = nodoLogico.visual;
+  private void drawEdgesRecursively(TreeNode nodoLogico) {
+    if (nodoLogico == null || nodoLogico.getVisual() == null) return;
+    Button parentBtn = nodoLogico.getVisual();
 
     // left child
-    if (nodoLogico.getLeft() != null && nodoLogico.getLeft().visual != null) {
-      Button childBtn = nodoLogico.getLeft().visual;
+    if (nodoLogico.getLeft() != null && nodoLogico.getLeft().getVisual() != null) {
+      Button childBtn = nodoLogico.getLeft().getVisual();
       Line line = createLineBetween(parentBtn, childBtn);
       edgesLayer.getChildren().add(line);
       drawEdgesRecursively(nodoLogico.getLeft());
     }
 
     // right child
-    if (nodoLogico.getRight() != null && nodoLogico.getRight().visual != null) {
-      Button childBtn = nodoLogico.getRight().visual;
+    if (nodoLogico.getRight() != null && nodoLogico.getRight().getVisual() != null) {
+      Button childBtn = nodoLogico.getRight().getVisual();
       Line line = createLineBetween(parentBtn, childBtn);
       edgesLayer.getChildren().add(line);
       drawEdgesRecursively(nodoLogico.getRight());
@@ -468,7 +500,7 @@ public class UI extends Application {
 
   // calcula el lugar del nuevo nodo y lo inserta en el panel central
   public void calcularLugar(
-      int weight, Button padreVisual, int nivelActual, Node nodoLogicoPadre, Button newButton) {
+      int weight, Button padreVisual, int nivelActual, TreeNode nodoLogicoPadre, Button newButton) {
     int datoPadre = (Integer.parseInt(padreVisual.getText()));
     double available = getViewportWidth();
     double espacio = (available / 2) / Math.pow(2, nivelActual);
@@ -478,14 +510,14 @@ public class UI extends Application {
         centralPanel.getChildren().add(newButton);
         newButton.setLayoutY(padreVisual.getLayoutY() + 70);
         newButton.setLayoutX(padreVisual.getLayoutX() - espacio);
-        Node nuevoHijo = new Node(weight);
-        nuevoHijo.visual = newButton;
+        TreeNode nuevoHijo = new TreeNode(weight);
+        nuevoHijo.setVisual(newButton);
         nodoLogicoPadre.setLeft(nuevoHijo);
       } else {
 
         calcularLugar(
             weight,
-            nodoLogicoPadre.getLeft().visual,
+            nodoLogicoPadre.getLeft().getVisual(),
             nivelActual + 1,
             nodoLogicoPadre.getLeft(),
             newButton);
@@ -495,13 +527,13 @@ public class UI extends Application {
         centralPanel.getChildren().add(newButton);
         newButton.setLayoutY(padreVisual.getLayoutY() + 70);
         newButton.setLayoutX(padreVisual.getLayoutX() + espacio);
-        Node nuevoHijo = new Node(weight);
-        nuevoHijo.visual = newButton;
+        TreeNode nuevoHijo = new TreeNode(weight);
+        nuevoHijo.setVisual(newButton);
         nodoLogicoPadre.setRight(nuevoHijo);
       } else {
         calcularLugar(
             weight,
-            nodoLogicoPadre.getRight().visual,
+            nodoLogicoPadre.getRight().getVisual(),
             nivelActual + 1,
             nodoLogicoPadre.getRight(),
             newButton);

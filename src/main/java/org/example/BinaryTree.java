@@ -2,7 +2,7 @@ package org.example;
 
 public class BinaryTree {
 
-  private Node root = null;
+  private TreeNode root = null;
 
   public BinaryTree() {
     this.root = null;
@@ -12,79 +12,80 @@ public class BinaryTree {
     root = insertRec(root, weight);
   }
 
-  private Node insertRec(Node node, int weight) {
-    if (node == null) return new Node(weight);
-    if (weight < node.getWeight()) {
-      node.setLeft(insertRec(node.getLeft(), weight));
-    } else if (weight > node.getWeight()) {
-      node.setRight(insertRec(node.getRight(), weight));
+  private TreeNode insertRec(TreeNode treeNode, int weight) {
+    if (treeNode == null) return new TreeNode(weight);
+    if (weight < treeNode.getWeight()) {
+      treeNode.setLeft(insertRec(treeNode.getLeft(), weight));
+    } else if (weight > treeNode.getWeight()) {
+      treeNode.setRight(insertRec(treeNode.getRight(), weight));
     } else {
     }
-    return node;
+    return treeNode;
   }
 
   public boolean delete(int weight) {
-    Node parent = null;
-    Node node = root;
+    TreeNode parent = null;
+    TreeNode treeNode = root;
 
     // case 1: search for the node to delete
-    while (node != null && node.getWeight() != weight) {
-      parent = node;
-      if (weight < node.getWeight()) node = node.getLeft();
-      else node = node.getRight();
+    while (treeNode != null && treeNode.getWeight() != weight) {
+      parent = treeNode;
+      if (weight < treeNode.getWeight()) treeNode = treeNode.getLeft();
+      else treeNode = treeNode.getRight();
     }
 
-    if (node == null) {
+    if (treeNode == null) {
       System.out.println("Node not found: " + weight);
       return false;
     }
 
     // case 2: node has no right child
-    if (node.getRight() == null) {
+    if (treeNode.getRight() == null) {
       if (parent == null) {
-        root = node.getLeft();
-      } else if (parent.getLeft() == node) {
-        parent.setLeft(node.getLeft());
+        root = treeNode.getLeft();
+      } else if (parent.getLeft() == treeNode) {
+        parent.setLeft(treeNode.getLeft());
       } else {
-        parent.setRight(node.getLeft());
+        parent.setRight(treeNode.getLeft());
       }
-      node.setLeft(null);
-      node.setRight(null);
+      treeNode.setLeft(null);
+      treeNode.setRight(null);
       System.out.println("Deleted node: " + weight);
       return true;
     }
 
     // case 3: node has right child
-    Node succParent = node;
-    Node successor = node.getRight();
+    TreeNode succParent = treeNode;
+    TreeNode successor = treeNode.getRight();
     while (successor.getLeft() != null) {
       succParent = successor;
       successor = successor.getLeft();
     }
 
-    if (succParent != node) {
+    if (succParent != treeNode) {
       succParent.setLeft(successor.getRight()); // Link successor's right child to its parent
-      successor.setRight(node.getRight()); // Link node's right child to successor
+      successor.setRight(treeNode.getRight()); // Link node's right child to successor
     }
-      successor.setLeft(node.getLeft()); // Link node's left child to successor
+    successor.setLeft(treeNode.getLeft()); // Link node's left child to successor
 
-      if (parent == null) {
+    if (parent == null) {
       root = successor; // Deleting the root node
-    } else if (parent.getLeft() == node) {
+    } else if (parent.getLeft() == treeNode) {
       parent.setLeft(successor); // Link parent to successor
     } else {
       parent.setRight(successor); // Link parent to successor
     }
     // Clean up the deleted node
-    node.setLeft(null);
-    node.setRight(null);
+    treeNode.setLeft(null);
+    treeNode.setRight(null);
 
-      System.out.println("Deleted node: " + weight);
-      return true;
+    System.out.println("Deleted node: " + weight);
+    return true;
   }
-    //search node
-    public Node search(int weight) {
-    Node current = root;
+
+  // search node
+  public TreeNode search(int weight) {
+    TreeNode current = root;
     while (current != null) {
       if (weight == current.getWeight()) {
         return current;
@@ -97,8 +98,7 @@ public class BinaryTree {
     return null;
   }
 
-
-  public Node setRoot(Node root) {
+  public TreeNode setRoot(TreeNode root) {
     this.root = root;
     return root;
   }
@@ -109,11 +109,11 @@ public class BinaryTree {
     return sb.toString();
   }
 
-  private void preOrderRec(Node node, StringBuilder s) {
-    if (node == null) return;
-    s.append(node.weight + ",").append("");
-    preOrderRec(node.getLeft(), s);
-    preOrderRec(node.getRight(), s);
+  private void preOrderRec(TreeNode treeNode, StringBuilder s) {
+    if (treeNode == null) return;
+    s.append(treeNode.getWeight()).append(",");
+    preOrderRec(treeNode.getLeft(), s);
+    preOrderRec(treeNode.getRight(), s);
   }
 
   public String inOrder() {
@@ -122,11 +122,11 @@ public class BinaryTree {
     return sb.toString();
   }
 
-  private void inOrderRec(Node node, StringBuilder s) {
-    if (node == null) return;
-    inOrderRec(node.getLeft(), s);
-    s.append(node.weight + ",").append("");
-    inOrderRec(node.getRight(), s);
+  private void inOrderRec(TreeNode treeNode, StringBuilder s) {
+    if (treeNode == null) return;
+    inOrderRec(treeNode.getLeft(), s);
+    s.append(treeNode.getWeight()).append(",");
+    inOrderRec(treeNode.getRight(), s);
   }
 
   public String postOrder() {
@@ -135,14 +135,14 @@ public class BinaryTree {
     return sb.toString();
   }
 
-  private void postOrderRec(Node node, StringBuilder s) {
-    if (node == null) return;
-    postOrderRec(node.getLeft(), s);
-    postOrderRec(node.getRight(), s);
-    s.append(node.weight + ",").append("");
+  private void postOrderRec(TreeNode treeNode, StringBuilder s) {
+    if (treeNode == null) return;
+    postOrderRec(treeNode.getLeft(), s);
+    postOrderRec(treeNode.getRight(), s);
+    s.append(treeNode.getWeight()).append(",");
   }
 
-  public Node getRoot() {
+  public TreeNode getRoot() {
     return this.root;
   }
 }
