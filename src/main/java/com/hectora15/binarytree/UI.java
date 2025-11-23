@@ -21,6 +21,8 @@ import javafx.application.Application;
 import javafx.scene.control.Alert;
 
 import javax.print.DocFlavor;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class UI extends Application {
@@ -60,6 +62,7 @@ public class UI extends Application {
 
   // como es una variable estática final, o sea que nunca va a cambiar
   // se escribe en mayúsculas y se separa con guiones bajos
+
   private static final String ORDER_TEXT_COLOR_HEX = "#b8c1cc";
 
   private void createImages() {
@@ -226,6 +229,16 @@ public class UI extends Application {
     updateOrdersText();
   }
 
+  public void updateOrdersText() {
+        String textOrder = arbol.preOrder();
+        orderText.setText("PreOrder:\t\t" + textOrder);
+
+        String textPre = arbol.inOrder();
+        orderPreText.setText("Inorder:\t\t" + textPre);
+
+        String textPost = arbol.postOrder();
+        orderPostText.setText("PostOrder:\t" + textPost);
+    }
   private void createCreditsText() {
     creditsText = new Text();
     creditsText.setText("Made by @HectorA15 && @Angelsol2");
@@ -342,7 +355,7 @@ public class UI extends Application {
 
     addEfectoHover(switchModeButton);
     switchModeButton.setOnAction(
-        Event -> {
+        e -> {
           modeCount = (modeCount + 1) % 3;
           switch (modeCount) {
             case 0 -> modeButton.setGraphic(addView);
@@ -537,18 +550,13 @@ public class UI extends Application {
     return line;
   }
 
-  // update the traversal order texts
-  public void updateOrdersText() {
-    String textOrder = arbol.preOrder();
-    orderText.setText("PreOrder:\t\t" + textOrder);
 
-    String textPre = arbol.inOrder();
-    orderPreText.setText("Inorder:\t\t" + textPre);
+    public void PositionNodes(int weight, Button padreVisual, int nivelActual, TreeNode nodoLogicoPadre, Button newButton){
+      Map<TreeNode, Integer> indexMapField = new HashMap<>();
 
-    String textPost = arbol.postOrder();
-    orderPostText.setText("PostOrder:\t" + textPost);
-  }
 
+
+    }
   // calcula el lugar del nuevo nodo y lo inserta en el panel central
   public void calcularLugar(
       int weight, Button padreVisual, int nivelActual, TreeNode nodoLogicoPadre, Button newButton) {

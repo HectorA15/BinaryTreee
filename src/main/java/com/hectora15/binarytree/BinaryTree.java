@@ -129,6 +129,7 @@ public class BinaryTree {
     inOrderRec(treeNode.getRight(), s);
   }
 
+
   public String postOrder() {
     StringBuilder sb = new StringBuilder();
     postOrderRec(root, sb);
