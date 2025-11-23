@@ -83,12 +83,18 @@ public class UI extends Application {
     addView.setFitWidth(18);
     addView.setFitHeight(18);
     addView.setPreserveRatio(true);
+
     deleteView.setFitWidth(18);
     deleteView.setFitHeight(18);
     deleteView.setPreserveRatio(true);
+
     searchView.setFitWidth(18);
     searchView.setFitHeight(18);
     searchView.setPreserveRatio(true);
+
+    clearView.setFitWidth(24);
+    clearView.setFitHeight(24);
+    clearView.setPreserveRatio(true);
   }
 
   private void createBottomBar() {
@@ -103,7 +109,9 @@ public class UI extends Application {
     switchModeButton = new Button("Switch Mode");
     modeButton = new Button();
     modeButton.setGraphic(addView);
+
     textField = new TextField();
+    textField.setFocusTraversable(false);
     textField.getStyleClass().add("text-box");
     // make text field expand to fill available space
     textField.setMaxWidth(Double.MAX_VALUE);
@@ -147,11 +155,24 @@ public class UI extends Application {
 
     if (clearButton == null) {
       clearButton = new Button();
+
+      double size = 35;
+
+      clearButton.setPrefSize(size, size);
+      clearButton.setMinSize(size, size);
+      clearButton.setMaxSize(size, size);
+
+      clearButton.setAlignment(Pos.CENTER);
+      clearButton.setPadding(Insets.EMPTY);
+      clearButton.setFocusTraversable(false);
       clearButton.setGraphic(clearView);
       clearButton.getStyleClass().remove("button");
       clearButton.getStyleClass().add("clear-button");
+
       AnchorPane.setRightAnchor(clearButton, 10.0);
       AnchorPane.setTopAnchor(clearButton, 10.0);
+
+      addEfectoHover(clearButton);
     }
 
     if (!centralPanel.getChildren().contains(clearButton)) {
@@ -176,8 +197,9 @@ public class UI extends Application {
               .addAll(creditsText, orderText, orderPreText, orderPostText, clearButton);
 
           // update orders text
+
           updateOrdersText();
-          Notification.show("SUCCESS", rootStack, "Now it's clear", 2000);
+          Notification.show("SUCCESS", rootStack, "Tree cleared", 2000);
         });
   }
 
@@ -218,7 +240,7 @@ public class UI extends Application {
   private void handleAdd(int val) {
     if (root == null) { // first node (root)
       root = new Button(String.valueOf(val));
-        addEfectoHover(root);
+      addEfectoHover(root);
       root.getStyleClass().add("button");
       datoRaiz = new TreeNode(val);
       datoRaiz.setVisual(root);
@@ -233,7 +255,7 @@ public class UI extends Application {
 
       Button newNode = new Button(String.valueOf(val));
       newNode.getStyleClass().add("button");
-        addEfectoHover(newNode);
+      addEfectoHover(newNode);
       calcularLugar(val, root, 1, datoRaiz, newNode);
       textField.clear();
       redrawTree();
@@ -276,7 +298,7 @@ public class UI extends Application {
       if (newRoot.getVisual() == null) {
         Button b = new Button(String.valueOf(newRoot.getWeight()));
         b.getStyleClass().add("button");
-          addEfectoHover(b);
+        addEfectoHover(b);
         newRoot.setVisual(b);
       }
       root = newRoot.getVisual();
@@ -316,6 +338,9 @@ public class UI extends Application {
 
   // ------------------------------------------------------------------
   private void configureSwitchMode() {
+    switchModeButton.setFocusTraversable(false);
+
+    addEfectoHover(switchModeButton);
     switchModeButton.setOnAction(
         Event -> {
           modeCount = (modeCount + 1) % 3;
@@ -329,6 +354,8 @@ public class UI extends Application {
   }
 
   private void configureModeButton() {
+    modeButton.setFocusTraversable(false);
+    addEfectoHover(modeButton);
     modeButton.setOnAction(
         event -> {
           Integer val = parseInput();
@@ -393,7 +420,7 @@ public class UI extends Application {
             modeButton.fire();
           } else if (event.getCode() == KeyCode.ESCAPE) {
             Platform.exit();
-          } else if (event.getCode() == KeyCode.SHIFT) {
+          } else if (event.getCode() == KeyCode.TAB) {
             switchModeButton.fire();
           }
         });
@@ -575,15 +602,15 @@ public class UI extends Application {
     double vpWidth = scroll.getViewportBounds().getWidth();
     return vpWidth > 0 ? vpWidth : centralPanel.getWidth();
   }
-    public void addEfectoHover(Button b) {
-        String styleNormal = "-fx-background-radius: 50%; -fx-min-width: 40px; -fx-min-height: 40px;"; // tamaño del valor normal del boton
-        String styleilluminated = "-fx-background-radius: 50%; -fx-min-width: 40px; -fx-min-height: 40px; -fx-background-color: #1921c1;"; // valores del boton coloreado 
-        b.setStyle(styleNormal);
-        b.setOnMouseEntered(e -> {
-            b.setStyle(styleilluminated); //cambio a el uluminado
+
+  public void addEfectoHover(Button b) {
+    b.setOnMouseEntered(
+        e -> {
+          b.getStyleClass().add("button-highlighted"); // cambio a el uluminado
         });
-        b.setOnMouseExited(e -> {
-            b.setStyle(styleNormal);// volmevos a el boton normal
+    b.setOnMouseExited(
+        e -> {
+          b.getStyleClass().remove("button-highlighted"); // volmevos a el boton normal
         });
-    }
+  }
 }

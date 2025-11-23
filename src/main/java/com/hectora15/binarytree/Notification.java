@@ -17,7 +17,8 @@ public class Notification {
   public static void show(String type, StackPane root, String message, int durationMillis) {
     Platform.runLater(
         () -> {
-          double fixedH = 60;
+          double fixedH = 50;
+
           HBox box = new HBox();
           box.setAlignment(Pos.BOTTOM_RIGHT);
           box.setPadding(new Insets(8));
@@ -42,7 +43,7 @@ public class Notification {
           // que el texto haga wrapping relativo al ancho del viewport
           text.wrappingWidthProperty().bind(root.widthProperty().multiply(0.2));
           // limitar ancho y alto de la notificación al 50% del viewport
-          box.maxWidthProperty().bind(root.widthProperty().multiply(0.2));
+          box.maxWidthProperty().bind(root.widthProperty().multiply(0.15));
           box.setMaxHeight(fixedH);
           box.setMinHeight(fixedH);
           box.setPrefHeight(fixedH);
